@@ -3,9 +3,6 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { SidebarLayout } from '@/components/layout/SidebarLayout'
 import { Toaster } from '@/components/ui/sonner'
-import { initDb } from '@/lib/db-init'
-
-await initDb()
 
 const inter = Inter({ subsets: ['latin'] })
 
