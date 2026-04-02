@@ -8,25 +8,31 @@ export async function GET() {
   const year  = month.slice(0, 4)
 
   // Current month transactions
-  const txs = db.prepare(
-    'SELECT type, value FROM transactions WHERE month = ?'
-  ).all(month) as { type: string; value: number }[]
+  const txsResult = await db.execute({
+    sql: 'SELECT type, value FROM transactions WHERE month = ?',
+    args: [month],
+  })
+  const txs = txsResult.rows as unknown as { type: string; value: number }[]
 
   const receita_mes = txs.filter((t) => t.type === 'entrada').reduce((s, t) => s + t.value, 0)
   const gastos_mes  = txs.filter((t) => t.type !== 'entrada').reduce((s, t) => s + t.value, 0)
   const saldo_mes   = receita_mes - gastos_mes
 
   // Total invested this year
-  const investedThisYear = (db.prepare(
-    "SELECT SUM(value) as total FROM transactions WHERE type = 'investimento' AND month LIKE ?"
-  ).get(`${year}-%`) as { total: number | null })?.total ?? 0
+  const investedResult = await db.execute({
+    sql: "SELECT SUM(value) as total FROM transactions WHERE type = 'investimento' AND month LIKE ?",
+    args: [`${year}-%`],
+  })
+  const investedThisYear = (investedResult.rows[0] as unknown as { total: number | null })?.total ?? 0
 
   // Live allocation from positions (avg price × quantity)
-  const allocation = db.prepare(`
-    SELECT asset_type, SUM(quantity * avg_price) as value
-    FROM investment_positions WHERE quantity > 0
-    GROUP BY asset_type
-  `).all() as { asset_type: string; value: number }[]
+  const allocationResult = await db.execute({
+    sql: `SELECT asset_type, SUM(quantity * avg_price) as value
+      FROM investment_positions WHERE quantity > 0
+      GROUP BY asset_type`,
+    args: [],
+  })
+  const allocation = allocationResult.rows as unknown as { asset_type: string; value: number }[]
 
   const alloc = { acoes: 0, fii: 0, renda_fixa: 0, fundo_investimento: 0, cripto: 0, dolar: 0 }
   for (const a of allocation) {
@@ -37,9 +43,11 @@ export async function GET() {
   const patrimonio_total = Object.values(alloc).reduce((s, v) => s + v, 0)
 
   // Last 7 snapshots for mini evolution chart
-  const snapshots = db.prepare(
-    'SELECT * FROM patrimonio_snapshots ORDER BY month DESC LIMIT 7'
-  ).all() as PatrimonioSnapshot[]
+  const snapshotsResult = await db.execute({
+    sql: 'SELECT * FROM patrimonio_snapshots ORDER BY month DESC LIMIT 7',
+    args: [],
+  })
+  const snapshots = snapshotsResult.rows as unknown as PatrimonioSnapshot[]
 
   return NextResponse.json({
     month,

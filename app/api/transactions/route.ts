@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const category = searchParams.get('category')
 
   let query = 'SELECT * FROM transactions WHERE 1=1'
-  const params: unknown[] = []
+  const params: (string | number | null)[] = []
 
   if (month)    { query += ' AND month = ?';    params.push(month) }
   if (type)     { query += ' AND type = ?';     params.push(type) }
@@ -18,8 +18,8 @@ export async function GET(req: NextRequest) {
 
   query += ' ORDER BY date DESC, id DESC'
 
-  const rows = db.prepare(query).all(...params)
-  return NextResponse.json(rows)
+  const result = await db.execute({ sql: query, args: params })
+  return NextResponse.json(result.rows)
 }
 
 export async function POST(req: NextRequest) {
@@ -34,18 +34,20 @@ export async function POST(req: NextRequest) {
 
   const month = parseMonthKey(date)
 
-  const stmt = db.prepare(`
-    INSERT INTO transactions
+  const result = await db.execute({
+    sql: `INSERT INTO transactions
       (date, value, payment_method, category, type, description, month, installment_total, installment_current)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: [
+      date, value, payment_method, category, type,
+      description ?? null, month,
+      installment_total ?? null, installment_current ?? null,
+    ],
+  })
 
-  const result = stmt.run(
-    date, value, payment_method, category, type,
-    description ?? null, month,
-    installment_total ?? null, installment_current ?? null
-  )
-
-  const created = db.prepare('SELECT * FROM transactions WHERE id = ?').get(result.lastInsertRowid)
-  return NextResponse.json(created, { status: 201 })
+  const created = await db.execute({
+    sql: 'SELECT * FROM transactions WHERE id = ?',
+    args: [Number(result.lastInsertRowid)],
+  })
+  return NextResponse.json(created.rows[0], { status: 201 })
 }

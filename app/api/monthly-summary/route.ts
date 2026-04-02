@@ -9,32 +9,38 @@ export async function GET(req: NextRequest) {
   if (!month) return NextResponse.json({ error: 'month obrigatório' }, { status: 400 })
 
   // ── Ensure checklist rows exist for this month ───────────────────────────
-  const existingCount = (db.prepare(
-    'SELECT COUNT(*) as n FROM monthly_checklist WHERE month = ?'
-  ).get(month) as { n: number }).n
+  const countResult = await db.execute({
+    sql: 'SELECT COUNT(*) as n FROM monthly_checklist WHERE month = ?',
+    args: [month],
+  })
+  const existingCount = (countResult.rows[0] as unknown as { n: number }).n
 
   if (existingCount === 0) {
     // Try to seed from previous month's items (with their values)
     const prev = prevMonthKey(month)
-    const prevItems = db.prepare(
-      'SELECT item_name, section, expected_value FROM monthly_checklist WHERE month = ? ORDER BY section, id'
-    ).all(prev) as { item_name: string; section: string; expected_value: number | null }[]
+    const prevResult = await db.execute({
+      sql: 'SELECT item_name, section, expected_value FROM monthly_checklist WHERE month = ? ORDER BY section, id',
+      args: [prev],
+    })
+    const prevItems = prevResult.rows as unknown as { item_name: string; section: string; expected_value: number | null }[]
 
     const source = prevItems.length > 0 ? prevItems : CHECKLIST_DEFAULTS
 
-    const insertChecklist = db.prepare(`
-      INSERT OR IGNORE INTO monthly_checklist (month, item_name, section, expected_value)
-      VALUES (?, ?, ?, ?)
-    `)
-    db.transaction(() => {
-      for (const item of source) {
-        insertChecklist.run(month, item.item_name, item.section, item.expected_value ?? null)
-      }
-    })()
+    await db.batch(
+      source.map((item) => ({
+        sql: 'INSERT OR IGNORE INTO monthly_checklist (month, item_name, section, expected_value) VALUES (?, ?, ?, ?)',
+        args: [month, item.item_name, item.section, item.expected_value ?? null],
+      })),
+      'write'
+    )
   }
 
   // ── Fetch transactions for month ─────────────────────────────────────────
-  const txs = db.prepare('SELECT * FROM transactions WHERE month = ?').all(month) as {
+  const txsResult = await db.execute({
+    sql: 'SELECT * FROM transactions WHERE month = ?',
+    args: [month],
+  })
+  const txs = txsResult.rows as unknown as {
     type: string; value: number; payment_method: string; category: string
   }[]
 
@@ -59,24 +65,32 @@ export async function GET(req: NextRequest) {
   const dinheiroEmConta = totalEntradas - totalSaidas
 
   // ── Checklist ────────────────────────────────────────────────────────────
-  const checklist = db.prepare(
-    'SELECT * FROM monthly_checklist WHERE month = ? ORDER BY section, id'
-  ).all(month) as ChecklistItem[]
+  const checklistResult = await db.execute({
+    sql: 'SELECT * FROM monthly_checklist WHERE month = ? ORDER BY section, id',
+    args: [month],
+  })
+  const checklist = checklistResult.rows as unknown as ChecklistItem[]
 
   // ── Category breakdown ───────────────────────────────────────────────────
-  const spending = db.prepare(`
-    SELECT category, COUNT(*) as count, SUM(value) as real
-    FROM transactions WHERE month = ? AND type != 'entrada'
-    GROUP BY category
-  `).all(month) as { category: string; count: number; real: number }[]
+  const spendingResult = await db.execute({
+    sql: `SELECT category, COUNT(*) as count, SUM(value) as real
+      FROM transactions WHERE month = ? AND type != 'entrada'
+      GROUP BY category`,
+    args: [month],
+  })
+  const spending = spendingResult.rows as unknown as { category: string; count: number; real: number }[]
 
-  const budgets = db.prepare(
-    'SELECT category, budget FROM category_budgets WHERE month = ?'
-  ).all(month) as { category: string; budget: number }[]
+  const budgetsResult = await db.execute({
+    sql: 'SELECT category, budget FROM category_budgets WHERE month = ?',
+    args: [month],
+  })
+  const budgets = budgetsResult.rows as unknown as { category: string; budget: number }[]
 
-  const allCategories = db.prepare(
-    "SELECT id, name, type, color, active FROM categories WHERE active = 1"
-  ).all() as { id: number; name: string; type: CategoryType; color: string | null; active: number }[]
+  const allCategoriesResult = await db.execute({
+    sql: 'SELECT id, name, type, color, active FROM categories WHERE active = 1',
+    args: [],
+  })
+  const allCategories = allCategoriesResult.rows as unknown as { id: number; name: string; type: CategoryType; color: string | null; active: number }[]
 
   const budgetMap = new Map(budgets.map((b) => [b.category, b.budget]))
   const spendMap  = new Map(spending.map((s) => [s.category, s]))

@@ -26,32 +26,28 @@ export async function POST(req: NextRequest) {
     }
 
     // Upsert: new tickers get asset_type/subtype from file; existing keep their manual values
-    const upsertPosition = db.prepare(`
-      INSERT INTO investment_positions (ticker, asset_type, quantity, avg_price, subtype, updated_at)
-      VALUES (?, ?, ?, ?, ?, datetime('now'))
-      ON CONFLICT(ticker) DO UPDATE SET
-        quantity   = excluded.quantity,
-        avg_price  = excluded.avg_price,
-        updated_at = excluded.updated_at
-    `)
-
-    // Remove positions no longer present in the file
     const importedTickers = positions.map((p) => p.ticker)
     const placeholders = importedTickers.map(() => '?').join(',')
 
-    const syncAll = db.transaction(() => {
-      for (const pos of positions) {
-        upsertPosition.run(pos.ticker, pos.asset_type, pos.quantity, pos.avg_price, pos.subtype ?? null)
-      }
-      db.prepare(
-        `DELETE FROM investment_positions WHERE ticker NOT IN (${placeholders}) AND asset_type NOT IN ('cripto', 'dolar')`
-      ).run(...importedTickers)
-    })
-    syncAll()
+    await db.batch([
+      ...positions.map((pos) => ({
+        sql: `INSERT INTO investment_positions (ticker, asset_type, quantity, avg_price, subtype, updated_at)
+          VALUES (?, ?, ?, ?, ?, datetime('now'))
+          ON CONFLICT(ticker) DO UPDATE SET
+            quantity   = excluded.quantity,
+            avg_price  = excluded.avg_price,
+            updated_at = excluded.updated_at`,
+        args: [pos.ticker, pos.asset_type, pos.quantity, pos.avg_price, pos.subtype ?? null],
+      })),
+      {
+        sql: `DELETE FROM investment_positions WHERE ticker NOT IN (${placeholders}) AND asset_type NOT IN ('cripto', 'dolar')`,
+        args: importedTickers,
+      },
+    ], 'write')
 
     if (patrimonio) {
-      db.prepare(`
-        INSERT INTO patrimonio_snapshots
+      await db.execute({
+        sql: `INSERT INTO patrimonio_snapshots
           (month, total_value, acoes_value, fii_value, renda_fixa_value, cripto_value, dolar_value)
         VALUES (?, ?, ?, ?, ?, ?, 0)
         ON CONFLICT(month) DO UPDATE SET
@@ -60,29 +56,26 @@ export async function POST(req: NextRequest) {
           fii_value        = excluded.fii_value,
           renda_fixa_value = excluded.renda_fixa_value,
           cripto_value     = excluded.cripto_value,
-          captured_at      = datetime('now')
-      `).run(
-        patrimonio.month, patrimonio.total_value,
-        patrimonio.acoes_value, patrimonio.fii_value,
-        patrimonio.renda_fixa_value, patrimonio.cripto_value,
-      )
+          captured_at      = datetime('now')`,
+        args: [
+          patrimonio.month, patrimonio.total_value,
+          patrimonio.acoes_value, patrimonio.fii_value,
+          patrimonio.renda_fixa_value, patrimonio.cripto_value,
+        ],
+      })
     }
 
     // Insert provisioned dividends (idempotent: remove previous from same file first)
     if (dividends.length) {
       const srcFile = `dividendos::${file.name}`
-      db.prepare('DELETE FROM investment_transactions WHERE source_file = ?').run(srcFile)
-
-      const insertDiv = db.prepare(`
-        INSERT INTO investment_transactions (date, ticker, asset_type, operation, total_value, source_file)
-        VALUES (?, ?, ?, 'D', ?, ?)
-      `)
-      const insertDivAll = db.transaction(() => {
-        for (const d of dividends) {
-          insertDiv.run(d.date, d.ticker, d.asset_type, d.total_value, srcFile)
-        }
-      })
-      insertDivAll()
+      await db.batch([
+        { sql: 'DELETE FROM investment_transactions WHERE source_file = ?', args: [srcFile] },
+        ...dividends.map((d) => ({
+          sql: `INSERT INTO investment_transactions (date, ticker, asset_type, operation, total_value, source_file)
+            VALUES (?, ?, ?, 'D', ?, ?)`,
+          args: [d.date, d.ticker, d.asset_type, d.total_value, srcFile],
+        })),
+      ], 'write')
     }
 
     return NextResponse.json({
@@ -102,49 +95,43 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Nenhuma transação encontrada no arquivo' }, { status: 422 })
   }
 
-  const insertTx = db.prepare(`
-    INSERT INTO investment_transactions
-      (date, ticker, asset_type, operation, quantity, unit_price, total_value, source_file)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `)
-
-  const insertAll = db.transaction(() => {
-    for (const tx of parsed) {
-      insertTx.run(
+  await db.batch(
+    parsed.map((tx) => ({
+      sql: `INSERT INTO investment_transactions
+        (date, ticker, asset_type, operation, quantity, unit_price, total_value, source_file)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
         tx.date, tx.ticker, tx.asset_type, tx.operation,
-        tx.quantity ?? null, tx.unit_price ?? null, tx.total_value, tx.source_file ?? null
-      )
-    }
-  })
-  insertAll()
+        tx.quantity ?? null, tx.unit_price ?? null, tx.total_value, tx.source_file ?? null,
+      ],
+    })),
+    'write'
+  )
 
-  const allTxs = db.prepare(
-    'SELECT * FROM investment_transactions ORDER BY date ASC, id ASC'
-  ).all() as InvestmentTransaction[]
+  const allTxsResult = await db.execute({
+    sql: 'SELECT * FROM investment_transactions ORDER BY date ASC, id ASC',
+    args: [],
+  })
+  const allTxs = allTxsResult.rows as unknown as InvestmentTransaction[]
 
   const positions = computePositions(allTxs)
 
-  const upsertPosition = db.prepare(`
-    INSERT INTO investment_positions (ticker, asset_type, quantity, avg_price, updated_at)
-    VALUES (?, ?, ?, ?, datetime('now'))
-    ON CONFLICT(ticker) DO UPDATE SET
-      asset_type = excluded.asset_type,
-      quantity   = excluded.quantity,
-      avg_price  = excluded.avg_price,
-      updated_at = excluded.updated_at
-  `)
-
-  db.prepare('DELETE FROM investment_positions WHERE quantity = 0').run()
-
-  const upsertAll = db.transaction(() => {
-    for (const pos of positions) {
-      upsertPosition.run(pos.ticker, pos.asset_type, pos.quantity, pos.avg_price)
-    }
-  })
-  upsertAll()
+  await db.batch([
+    { sql: 'DELETE FROM investment_positions WHERE quantity = 0', args: [] },
+    ...positions.map((pos) => ({
+      sql: `INSERT INTO investment_positions (ticker, asset_type, quantity, avg_price, updated_at)
+        VALUES (?, ?, ?, ?, datetime('now'))
+        ON CONFLICT(ticker) DO UPDATE SET
+          asset_type = excluded.asset_type,
+          quantity   = excluded.quantity,
+          avg_price  = excluded.avg_price,
+          updated_at = excluded.updated_at`,
+      args: [pos.ticker, pos.asset_type, pos.quantity, pos.avg_price],
+    })),
+  ], 'write')
 
   const affectedMonths = [...new Set(parsed.map((t) => parseMonthKey(t.date)))]
-  updatePatrimonioSnapshots(affectedMonths)
+  await updatePatrimonioSnapshots(affectedMonths)
 
   return NextResponse.json({
     imported: parsed.length,
@@ -154,25 +141,13 @@ export async function POST(req: NextRequest) {
   })
 }
 
-function updatePatrimonioSnapshots(months: string[]) {
-  const upsertSnapshot = db.prepare(`
-    INSERT INTO patrimonio_snapshots (month, total_value, acoes_value, fii_value, renda_fixa_value, cripto_value, dolar_value)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(month) DO UPDATE SET
-      total_value      = excluded.total_value,
-      acoes_value      = excluded.acoes_value,
-      fii_value        = excluded.fii_value,
-      renda_fixa_value = excluded.renda_fixa_value,
-      cripto_value     = excluded.cripto_value,
-      dolar_value      = excluded.dolar_value,
-      captured_at      = datetime('now')
-  `)
-
+async function updatePatrimonioSnapshots(months: string[]) {
   for (const month of months.sort()) {
-    // Compute cumulative positions up to end of this month
-    const txsUntil = db.prepare(
-      "SELECT * FROM investment_transactions WHERE date <= ? AND date >= '2000-01-01' ORDER BY date ASC, id ASC"
-    ).all(`${month}-31`) as InvestmentTransaction[]
+    const txsResult = await db.execute({
+      sql: "SELECT * FROM investment_transactions WHERE date <= ? AND date >= '2000-01-01' ORDER BY date ASC, id ASC",
+      args: [`${month}-31`],
+    })
+    const txsUntil = txsResult.rows as unknown as InvestmentTransaction[]
 
     const positions = computePositions(txsUntil)
 
@@ -187,20 +162,33 @@ function updatePatrimonioSnapshots(months: string[]) {
       else if (pos.asset_type === 'dolar')      dolar      += val
     }
 
-    upsertSnapshot.run(month, total, acoes, fii, renda_fixa, cripto, dolar)
+    await db.execute({
+      sql: `INSERT INTO patrimonio_snapshots (month, total_value, acoes_value, fii_value, renda_fixa_value, cripto_value, dolar_value)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(month) DO UPDATE SET
+          total_value      = excluded.total_value,
+          acoes_value      = excluded.acoes_value,
+          fii_value        = excluded.fii_value,
+          renda_fixa_value = excluded.renda_fixa_value,
+          cripto_value     = excluded.cripto_value,
+          dolar_value      = excluded.dolar_value,
+          captured_at      = datetime('now')`,
+      args: [month, total, acoes, fii, renda_fixa, cripto, dolar],
+    })
   }
 }
 
 export async function GET() {
   // Return upload history (distinct source files)
-  const history = db.prepare(`
-    SELECT source_file, MIN(date) as first_date, MAX(date) as last_date,
+  const result = await db.execute({
+    sql: `SELECT source_file, MIN(date) as first_date, MAX(date) as last_date,
            COUNT(*) as tx_count, MAX(created_at) as uploaded_at
     FROM investment_transactions
     WHERE source_file IS NOT NULL
     GROUP BY source_file
-    ORDER BY uploaded_at DESC
-  `).all()
+    ORDER BY uploaded_at DESC`,
+    args: [],
+  })
 
-  return NextResponse.json(history)
+  return NextResponse.json(result.rows)
 }

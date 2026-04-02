@@ -9,7 +9,16 @@ export async function PUT(
   const { id } = await params
   const body = await req.json()
 
-  const existing = db.prepare('SELECT * FROM transactions WHERE id = ?').get(id)
+  const existingResult = await db.execute({
+    sql: 'SELECT * FROM transactions WHERE id = ?',
+    args: [id],
+  })
+  const existing = existingResult.rows[0] as unknown as {
+    date: string; value: number; payment_method: string; category: string;
+    type: string; description: string | null; month: string;
+    installment_total: number | null; installment_current: number | null;
+  } | undefined
+
   if (!existing) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
 
   const {
@@ -17,28 +26,32 @@ export async function PUT(
     description, installment_total, installment_current,
   } = body
 
-  const month = date ? parseMonthKey(date) : (existing as { month: string }).month
+  const month = date ? parseMonthKey(date) : existing.month
 
-  db.prepare(`
-    UPDATE transactions SET
+  await db.execute({
+    sql: `UPDATE transactions SET
       date = ?, value = ?, payment_method = ?, category = ?, type = ?,
       description = ?, month = ?, installment_total = ?, installment_current = ?
-    WHERE id = ?
-  `).run(
-    date   ?? (existing as { date: string }).date,
-    value  ?? (existing as { value: number }).value,
-    payment_method ?? (existing as { payment_method: string }).payment_method,
-    category ?? (existing as { category: string }).category,
-    type ?? (existing as { type: string }).type,
-    description ?? (existing as { description: string | null }).description,
-    month,
-    installment_total  ?? (existing as { installment_total: number | null }).installment_total,
-    installment_current ?? (existing as { installment_current: number | null }).installment_current,
-    id
-  )
+    WHERE id = ?`,
+    args: [
+      date   ?? existing.date,
+      value  ?? existing.value,
+      payment_method ?? existing.payment_method,
+      category ?? existing.category,
+      type ?? existing.type,
+      description ?? existing.description,
+      month,
+      installment_total  ?? existing.installment_total,
+      installment_current ?? existing.installment_current,
+      id,
+    ],
+  })
 
-  const updated = db.prepare('SELECT * FROM transactions WHERE id = ?').get(id)
-  return NextResponse.json(updated)
+  const updated = await db.execute({
+    sql: 'SELECT * FROM transactions WHERE id = ?',
+    args: [id],
+  })
+  return NextResponse.json(updated.rows[0])
 }
 
 export async function DELETE(
@@ -46,9 +59,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const existing = db.prepare('SELECT id FROM transactions WHERE id = ?').get(id)
-  if (!existing) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
+  const existingResult = await db.execute({
+    sql: 'SELECT id FROM transactions WHERE id = ?',
+    args: [id],
+  })
+  if (!existingResult.rows[0]) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
 
-  db.prepare('DELETE FROM transactions WHERE id = ?').run(id)
+  await db.execute({ sql: 'DELETE FROM transactions WHERE id = ?', args: [id] })
   return NextResponse.json({ success: true })
 }

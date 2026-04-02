@@ -4,9 +4,11 @@ import { fetchBtcPriceBRL, fetchUsdPriceBRL } from '@/lib/crypto'
 import type { InvestmentPosition } from '@/lib/types'
 
 export async function GET() {
-  const positions = db.prepare(
-    'SELECT * FROM investment_positions WHERE quantity > 0 ORDER BY asset_type, ticker'
-  ).all() as InvestmentPosition[]
+  const result = await db.execute({
+    sql: 'SELECT * FROM investment_positions WHERE quantity > 0 ORDER BY asset_type, ticker',
+    args: [],
+  })
+  const positions = result.rows as unknown as InvestmentPosition[]
 
   const hasCripto = positions.some((p) => p.asset_type === 'cripto')
   const hasDolar  = positions.some((p) => p.asset_type === 'dolar')
