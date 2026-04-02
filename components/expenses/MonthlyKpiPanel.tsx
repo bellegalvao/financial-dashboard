@@ -15,7 +15,7 @@ export function MonthlyKpiPanel({ summary }: Props) {
         <p className="text-xs text-white uppercase tracking-wider font-bold mb-1">
           Dinheiro em conta
         </p>
-        <p className={`text-2xl font-bold ${dinheiro_em_conta >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+        <p className={`text-lg sm:text-2xl font-bold leading-tight ${dinheiro_em_conta >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
           {formatBRL(dinheiro_em_conta)}
         </p>
       </div>

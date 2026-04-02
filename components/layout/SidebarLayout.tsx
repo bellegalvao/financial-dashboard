@@ -97,7 +97,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
       {/* Main */}
       <main
         className={cn(
-          'flex-1 min-h-screen transition-all duration-200 pb-20 md:pb-0',
+          'flex-1 min-h-screen overflow-x-hidden transition-all duration-200 pb-20 md:pb-0',
           collapsed ? 'md:ml-14' : 'md:ml-56'
         )}
       >

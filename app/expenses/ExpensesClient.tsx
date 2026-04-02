@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { MonthPicker } from '@/components/layout/MonthPicker'
 import { TransactionTable } from '@/components/expenses/TransactionTable'
 import { MonthlySummaryChecklist } from '@/components/expenses/MonthlySummaryChecklist'
@@ -18,7 +18,6 @@ export function ExpensesClient({ month }: Props) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [summary,      setSummary]      = useState<MonthlySummary | null>(null)
   const [loading,      setLoading]      = useState(true)
-  const [fabOpen,      setFabOpen]      = useState(false)
   const [formOpen,     setFormOpen]     = useState(false)
 
   const fetchData = useCallback(async () => {
@@ -84,29 +83,12 @@ export function ExpensesClient({ month }: Props) {
   return (
     <>
       {/* FAB — mobile only */}
-      <div className="sm:hidden fixed bottom-20 right-4 z-50 flex flex-col items-end gap-2">
-        {fabOpen && (
-          <div
-            className="fixed inset-0 -z-10"
-            onClick={() => setFabOpen(false)}
-          />
-        )}
-        {fabOpen && (
-          <button
-            onClick={() => { setFabOpen(false); setFormOpen(true) }}
-            className="flex items-center gap-2 bg-zinc-800 border border-zinc-700 text-zinc-100 px-4 py-2.5 rounded-full shadow-xl text-sm font-medium"
-          >
-            <Plus className="h-4 w-4 text-emerald-400" />
-            Novo lançamento
-          </button>
-        )}
-        <button
-          onClick={() => setFabOpen(f => !f)}
-          className="h-14 w-14 rounded-full bg-purple-600 hover:bg-purple-500 text-white shadow-xl flex items-center justify-center transition-colors"
-        >
-          {fabOpen ? <X className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
-        </button>
-      </div>
+      <button
+        onClick={() => setFormOpen(true)}
+        className="sm:hidden fixed bottom-20 right-4 z-50 h-14 w-14 rounded-full bg-purple-600 hover:bg-purple-500 text-white shadow-xl flex items-center justify-center transition-colors"
+      >
+        <Plus className="h-6 w-6" />
+      </button>
 
       {/* TransactionForm para o FAB mobile */}
       <TransactionForm

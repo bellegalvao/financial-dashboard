@@ -86,16 +86,16 @@ export function TransactionTable({ transactions, month, onRefresh }: Props) {
         </div>
       </div>
 
-      <div className="rounded-lg border border-zinc-800 overflow-hidden">
-        <Table>
+      <div className="rounded-lg border border-zinc-800 overflow-x-auto">
+        <Table className="min-w-[420px]">
           <TableHeader>
             <TableRow className="border-zinc-800 hover:bg-transparent">
-              <TableHead className="text-zinc-400 w-24">Data</TableHead>
+              <TableHead className="text-zinc-400 w-16">Data</TableHead>
               <TableHead className="text-zinc-400">Categoria</TableHead>
               <TableHead className="text-zinc-400">Tipo</TableHead>
-              <TableHead className="text-zinc-400">Pagamento</TableHead>
+              <TableHead className="text-zinc-400 hidden sm:table-cell">Pagamento</TableHead>
               <TableHead className="text-zinc-400 text-right">Valor</TableHead>
-              <TableHead className="text-zinc-400 w-16" />
+              <TableHead className="text-zinc-400 w-14" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -108,12 +108,12 @@ export function TransactionTable({ transactions, month, onRefresh }: Props) {
             ) : (
               filtered.map((tx) => (
                 <TableRow key={tx.id} className="border-zinc-800 hover:bg-zinc-900/50">
-                  <TableCell className="text-zinc-400 text-sm">
+                  <TableCell className="text-zinc-400 text-xs whitespace-nowrap">
                     {tx.date.slice(5).replace('-', '/')}
                   </TableCell>
-                  <TableCell className="text-sm font-medium">{tx.category}</TableCell>
+                  <TableCell className="text-sm font-medium max-w-[100px] truncate">{tx.category}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-1.5 flex-wrap">
+                    <div className="flex items-center gap-1 flex-wrap">
                       <Badge
                         variant="secondary"
                         className={`text-xs ${tx.type === 'entrada' ? 'bg-emerald-600/20 text-emerald-400' : 'bg-red-600/20 text-red-400'}`}
@@ -121,16 +121,16 @@ export function TransactionTable({ transactions, month, onRefresh }: Props) {
                         {tx.type === 'entrada' ? 'Entrada' : 'Saída'}
                       </Badge>
                       {SUBTYPE_LABELS[tx.type as TransactionType] && (
-                        <span className={`rounded-full border px-2 py-px text-[10px] leading-none ${SUBTYPE_COLORS[tx.type as TransactionType]}`}>
+                        <span className={`hidden sm:inline rounded-full border px-2 py-px text-[10px] leading-none ${SUBTYPE_COLORS[tx.type as TransactionType]}`}>
                           {SUBTYPE_LABELS[tx.type as TransactionType]}
                         </span>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-zinc-400 text-sm">
+                  <TableCell className="text-zinc-400 text-sm hidden sm:table-cell">
                     {PAYMENT_METHOD_LABELS[tx.payment_method as keyof typeof PAYMENT_METHOD_LABELS]}
                   </TableCell>
-                  <TableCell className={`text-right font-mono font-semibold text-sm ${
+                  <TableCell className={`text-right font-mono font-semibold text-sm whitespace-nowrap ${
                     tx.type === 'entrada' ? 'text-emerald-400' : 'text-red-400'
                   }`}>
                     {tx.type === 'entrada' ? '+' : '-'}{formatBRL(tx.value)}
