@@ -1,13 +1,15 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { MonthPicker } from '@/components/layout/MonthPicker'
 import { TransactionTable } from '@/components/expenses/TransactionTable'
 import { MonthlySummaryChecklist } from '@/components/expenses/MonthlySummaryChecklist'
-import { MonthlyKpiPanel } from '@/components/expenses/MonthlyKpiPanel'
+import { MonthlyKpiPanel, DiinheiroEmContaCard, EntradasCard, SaidasCard, BalancoCard } from '@/components/expenses/MonthlyKpiPanel'
 import { CategoryBreakdownChart } from '@/components/expenses/CategoryBreakdownChart'
 import { TransactionForm } from '@/components/expenses/TransactionForm'
+import { CategoriesManager } from '@/components/expenses/CategoriesManager'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import type { Transaction, MonthlySummary, ChecklistSection } from '@/lib/types'
 
 interface Props {
@@ -19,9 +21,10 @@ export function ExpensesClient({ month }: Props) {
   const [summary,      setSummary]      = useState<MonthlySummary | null>(null)
   const [loading,      setLoading]      = useState(true)
   const [formOpen,     setFormOpen]     = useState(false)
+  const initializedRef = useRef(false)
 
   const fetchData = useCallback(async () => {
-    setLoading(true)
+    if (!initializedRef.current) setLoading(true)
     const [txRes, sumRes] = await Promise.all([
       fetch(`/api/transactions?month=${month}`),
       fetch(`/api/monthly-summary?month=${month}`),
@@ -29,9 +32,13 @@ export function ExpensesClient({ month }: Props) {
     setTransactions(await txRes.json())
     setSummary(await sumRes.json())
     setLoading(false)
+    initializedRef.current = true
   }, [month])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => {
+    initializedRef.current = false
+    fetchData()
+  }, [fetchData])
 
   async function handleChecklistToggle(id: number, checked: boolean) {
     await fetch('/api/monthly-summary/checklist', {
@@ -111,52 +118,100 @@ export function ExpensesClient({ month }: Props) {
         {loading ? (
           <div className="flex items-center justify-center h-64 text-zinc-500">Carregando...</div>
         ) : (
-          /*
-            Mobile order:  Resumo → Checklist → Lançamentos
-            Desktop order: Lançamentos(6col) | Checklist(2col) | Resumo(4col)
-          */
-          <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4">
-
-            {/* Resumo — mobile: 1st; desktop: col 9–12 */}
-            <div className="order-1 lg:order-3 lg:col-span-4 space-y-4">
-              <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Resumo</h2>
-              {summary && <MonthlyKpiPanel summary={summary} />}
-              {summary && summary.category_breakdown.length > 0 && (
-                <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-                  <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
-                    Gastos por Categoria
-                  </h3>
-                  <CategoryBreakdownChart data={summary.category_breakdown} />
-                </div>
-              )}
-            </div>
-
-            {/* Checklist — mobile: 2nd; desktop: col 7–8 */}
-            <div className="order-2 lg:order-2 lg:col-span-2 space-y-4">
-              <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Checklist</h2>
-              {summary && (
-                <MonthlySummaryChecklist
-                  items={summary.checklist}
-                  onToggle={handleChecklistToggle}
-                  onValueChange={handleChecklistValueChange}
-                  onNameChange={handleChecklistNameChange}
-                  onAddItem={handleChecklistAddItem}
-                  onDeleteItem={handleChecklistDeleteItem}
+          <>
+            {/* Mobile: stacked layout */}
+            <div className="flex flex-col gap-4 sm:hidden">
+              <div className="space-y-4">
+                <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Resumo</h2>
+                {summary && <MonthlyKpiPanel summary={summary} />}
+                {summary && summary.category_breakdown.length > 0 && (
+                  <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+                    <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+                      Gastos por Categoria
+                    </h3>
+                    <CategoryBreakdownChart data={summary.category_breakdown} />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-4">
+                <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Checklist</h2>
+                {summary && (
+                  <MonthlySummaryChecklist
+                    items={summary.checklist}
+                    onToggle={handleChecklistToggle}
+                    onValueChange={handleChecklistValueChange}
+                    onNameChange={handleChecklistNameChange}
+                    onAddItem={handleChecklistAddItem}
+                    onDeleteItem={handleChecklistDeleteItem}
+                  />
+                )}
+              </div>
+              <div className="space-y-4">
+                <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Lançamentos</h2>
+                <TransactionTable
+                  transactions={transactions}
+                  month={month}
+                  onRefresh={fetchData}
                 />
-              )}
+              </div>
             </div>
 
-            {/* Lançamentos — mobile: 3rd; desktop: col 1–6 */}
-            <div className="order-3 lg:order-1 lg:col-span-6 space-y-4">
-              <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Lançamentos</h2>
-              <TransactionTable
-                transactions={transactions}
-                month={month}
-                onRefresh={fetchData}
-              />
-            </div>
+            {/* Desktop: tabs layout */}
+            <Tabs defaultValue="resumo" className="hidden sm:flex">
+              <TabsList className="mb-4">
+                <TabsTrigger value="resumo">Resumo</TabsTrigger>
+                <TabsTrigger value="checklist">Checklist</TabsTrigger>
+                <TabsTrigger value="lancamentos">Lançamentos</TabsTrigger>
+                <TabsTrigger value="categorias">Categorias</TabsTrigger>
+              </TabsList>
 
-          </div>
+              <TabsContent value="resumo" className="space-y-4">
+                {summary && (
+                  <>
+                    <DiinheiroEmContaCard value={summary.dinheiro_em_conta} />
+                    <div className="grid grid-cols-3 gap-4">
+                      <EntradasCard entradas={summary.entradas} />
+                      <SaidasCard saidas={summary.saidas} />
+                      <BalancoCard balanco={summary.balanco} />
+                    </div>
+                    {summary.category_breakdown.length > 0 && (
+                      <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+                        <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+                          Gastos por Categoria
+                        </h3>
+                        <CategoryBreakdownChart data={summary.category_breakdown} />
+                      </div>
+                    )}
+                  </>
+                )}
+              </TabsContent>
+
+              <TabsContent value="checklist">
+                {summary && (
+                  <MonthlySummaryChecklist
+                    items={summary.checklist}
+                    onToggle={handleChecklistToggle}
+                    onValueChange={handleChecklistValueChange}
+                    onNameChange={handleChecklistNameChange}
+                    onAddItem={handleChecklistAddItem}
+                    onDeleteItem={handleChecklistDeleteItem}
+                  />
+                )}
+              </TabsContent>
+
+              <TabsContent value="lancamentos">
+                <TransactionTable
+                  transactions={transactions}
+                  month={month}
+                  onRefresh={fetchData}
+                />
+              </TabsContent>
+
+              <TabsContent value="categorias">
+                <CategoriesManager month={month} />
+              </TabsContent>
+            </Tabs>
+          </>
         )}
       </div>
     </>

@@ -57,64 +57,101 @@ export function MonthlySummaryChecklist({
   ) as Record<ChecklistSection, number>
 
   return (
-    <div className="space-y-3">
-      {/* Chips */}
-      <div className="flex flex-wrap gap-2">
+    <>
+      {/* Mobile: chips + single section */}
+      <div className="space-y-3 sm:hidden">
+        <div className="flex flex-wrap gap-2">
+          {sections.map((s) => {
+            const isActive = s === activeSection
+            return (
+              <button
+                key={s}
+                onClick={() => setActiveSection(s)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors ${
+                  isActive
+                    ? CHIP_ACTIVE[s]
+                    : 'border-zinc-700 text-zinc-500 hover:text-zinc-300 hover:border-zinc-500'
+                }`}
+              >
+                {SECTION_LABELS[s]}
+                {counts[s] > 0 && (
+                  <span className={`text-[10px] font-bold rounded-full px-1 ${isActive ? 'opacity-70' : 'opacity-40'}`}>
+                    {counts[s]}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+        <div className={`p-3 rounded-lg border ${colors}`}>
+          <div className="space-y-1.5">
+            {sectionItems.length === 0 && (
+              <p className="text-xs opacity-40 py-2 text-center">Nenhum item</p>
+            )}
+            {sectionItems.map((item) => (
+              <ChecklistRow
+                key={item.id}
+                item={item}
+                isEditingName={editingNameId === item.id}
+                onStartEditName={() => setEditingNameId(item.id)}
+                onCommitName={(name) => { setEditingNameId(null); onNameChange(item.id, name) }}
+                onCancelEditName={() => setEditingNameId(null)}
+                onToggle={onToggle}
+                onValueChange={onValueChange}
+                onDelete={() => onDeleteItem(item.id)}
+              />
+            ))}
+          </div>
+          <button
+            onClick={() => handleAdd(activeSection)}
+            className="mt-2 flex items-center gap-1 text-xs opacity-40 hover:opacity-80 transition-opacity"
+          >
+            <Plus size={11} />
+            adicionar
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop: all sections side by side, wrapping */}
+      <div className="hidden sm:flex flex-wrap gap-4">
         {sections.map((s) => {
-          const isActive = s === activeSection
+          const secItems = items.filter((i) => i.section === s)
+          const secColors = SECTION_COLORS[s]
           return (
-            <button
-              key={s}
-              onClick={() => setActiveSection(s)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors ${
-                isActive
-                  ? CHIP_ACTIVE[s]
-                  : 'border-zinc-700 text-zinc-500 hover:text-zinc-300 hover:border-zinc-500'
-              }`}
-            >
-              {SECTION_LABELS[s]}
-              {counts[s] > 0 && (
-                <span className={`text-[10px] font-bold rounded-full px-1 ${isActive ? 'opacity-70' : 'opacity-40'}`}>
-                  {counts[s]}
-                </span>
-              )}
-            </button>
+            <div key={s} className={`flex-1 min-w-52 p-3 rounded-lg border ${secColors}`}>
+              <h3 className="text-xs font-bold uppercase tracking-wider mb-2 opacity-70">
+                {SECTION_LABELS[s]}
+              </h3>
+              <div className="space-y-1.5">
+                {secItems.length === 0 && (
+                  <p className="text-xs opacity-40 py-2 text-center">Nenhum item</p>
+                )}
+                {secItems.map((item) => (
+                  <ChecklistRow
+                    key={item.id}
+                    item={item}
+                    isEditingName={editingNameId === item.id}
+                    onStartEditName={() => setEditingNameId(item.id)}
+                    onCommitName={(name) => { setEditingNameId(null); onNameChange(item.id, name) }}
+                    onCancelEditName={() => setEditingNameId(null)}
+                    onToggle={onToggle}
+                    onValueChange={onValueChange}
+                    onDelete={() => onDeleteItem(item.id)}
+                  />
+                ))}
+              </div>
+              <button
+                onClick={() => handleAdd(s)}
+                className="mt-2 flex items-center gap-1 text-xs opacity-40 hover:opacity-80 transition-opacity"
+              >
+                <Plus size={11} />
+                adicionar
+              </button>
+            </div>
           )
         })}
       </div>
-
-      {/* Content */}
-      <div className={`p-3 rounded-lg border ${colors}`}>
-        <div className="space-y-1.5">
-          {sectionItems.length === 0 && (
-            <p className="text-xs opacity-40 py-2 text-center">Nenhum item</p>
-          )}
-          {sectionItems.map((item) => (
-            <ChecklistRow
-              key={item.id}
-              item={item}
-              isEditingName={editingNameId === item.id}
-              onStartEditName={() => setEditingNameId(item.id)}
-              onCommitName={(name) => {
-                setEditingNameId(null)
-                onNameChange(item.id, name)
-              }}
-              onCancelEditName={() => setEditingNameId(null)}
-              onToggle={onToggle}
-              onValueChange={onValueChange}
-              onDelete={() => onDeleteItem(item.id)}
-            />
-          ))}
-        </div>
-        <button
-          onClick={() => handleAdd(activeSection)}
-          className="mt-2 flex items-center gap-1 text-xs opacity-40 hover:opacity-80 transition-opacity"
-        >
-          <Plus size={11} />
-          adicionar
-        </button>
-      </div>
-    </div>
+    </>
   )
 }
 

@@ -46,6 +46,7 @@ export function CategoryBreakdownChart({ data }: Props) {
         />
         <Tooltip
           contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px', fontSize: 12 }}
+          cursor={{ fill: 'rgba(255,255,255,0.05)' }}
           formatter={(val: unknown) => formatBRL(val as number)}
         />
         <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />

@@ -5,45 +5,62 @@ interface Props {
   summary: MonthlySummary
 }
 
+export function DiinheiroEmContaCard({ value }: { value: number }) {
+  return (
+    <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-center">
+      <p className="text-xs text-white uppercase tracking-wider font-bold mb-1">
+        Dinheiro em conta
+      </p>
+      <p className={`text-lg sm:text-2xl font-bold leading-tight ${value >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+        {formatBRL(value)}
+      </p>
+    </div>
+  )
+}
+
+export function EntradasCard({ entradas }: { entradas: MonthlySummary['entradas'] }) {
+  return (
+    <KpiBox title="Entradas" accent="emerald">
+      <KpiRow label="Fixas"  value={entradas.fixas}  positive />
+      <KpiRow label="Soltas" value={entradas.soltas} positive />
+      <KpiRow label="Total"  value={entradas.total}  positive bold />
+    </KpiBox>
+  )
+}
+
+export function SaidasCard({ saidas }: { saidas: MonthlySummary['saidas'] }) {
+  return (
+    <KpiBox title="Saídas" accent="red">
+      <KpiRow label="Contas Fixas"  value={saidas.contas_fixas} />
+      <KpiRow label="Pix/Débito"    value={saidas.pix_debito} />
+      <KpiRow label="Crédito"       value={saidas.credito} />
+      <KpiRow label="Caju"          value={saidas.caju} />
+      <KpiRow label="Parcelados"    value={saidas.parcelados} />
+      <KpiRow label="Investimento"  value={saidas.investimento} />
+      <KpiRow label="Total"         value={saidas.total} bold />
+    </KpiBox>
+  )
+}
+
+export function BalancoCard({ balanco }: { balanco: MonthlySummary['balanco'] }) {
+  return (
+    <KpiBox title="Balanço" accent="blue">
+      <KpiRow label="Contas a Pagar"      value={balanco.contas_a_pagar} />
+      <KpiRow label="Próxima Fatura"      value={balanco.proxima_fatura} />
+      <KpiRow label="Dinheiro pra Entrar" value={balanco.dinheiro_pra_entrar} positive bold />
+    </KpiBox>
+  )
+}
+
 export function MonthlyKpiPanel({ summary }: Props) {
   const { dinheiro_em_conta, entradas, saidas, balanco } = summary
 
   return (
     <div className="space-y-3">
-      {/* Dinheiro em conta */}
-      <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-center">
-        <p className="text-xs text-white uppercase tracking-wider font-bold mb-1">
-          Dinheiro em conta
-        </p>
-        <p className={`text-lg sm:text-2xl font-bold leading-tight ${dinheiro_em_conta >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-          {formatBRL(dinheiro_em_conta)}
-        </p>
-      </div>
-
-      {/* Entradas */}
-      <KpiBox title="Entradas" accent="emerald">
-        <KpiRow label="Fixas"  value={entradas.fixas}  positive />
-        <KpiRow label="Soltas" value={entradas.soltas} positive />
-        <KpiRow label="Total"  value={entradas.total}  positive bold />
-      </KpiBox>
-
-      {/* Saídas */}
-      <KpiBox title="Saídas" accent="red">
-        <KpiRow label="Contas Fixas"  value={saidas.contas_fixas} />
-        <KpiRow label="Pix/Débito"    value={saidas.pix_debito} />
-        <KpiRow label="Crédito"       value={saidas.credito} />
-        <KpiRow label="Caju"          value={saidas.caju} />
-        <KpiRow label="Parcelados"    value={saidas.parcelados} />
-        <KpiRow label="Investimento"  value={saidas.investimento} />
-        <KpiRow label="Total"         value={saidas.total} bold />
-      </KpiBox>
-
-      {/* Balanço */}
-      <KpiBox title="Balanço" accent="blue">
-        <KpiRow label="Contas a Pagar"    value={balanco.contas_a_pagar} />
-        <KpiRow label="Próxima Fatura"    value={balanco.proxima_fatura} />
-        <KpiRow label="Dinheiro pra Entrar" value={balanco.dinheiro_pra_entrar} positive bold />
-      </KpiBox>
+      <DiinheiroEmContaCard value={dinheiro_em_conta} />
+      <EntradasCard entradas={entradas} />
+      <SaidasCard saidas={saidas} />
+      <BalancoCard balanco={balanco} />
     </div>
   )
 }

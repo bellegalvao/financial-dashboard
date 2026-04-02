@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Plus, Upload } from 'lucide-react'
+import { Plus, Upload, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AllocationPieChart } from '@/components/investments/AllocationPieChart'
 import { PatrimonioLineChart } from '@/components/investments/PatrimonioLineChart'
@@ -30,6 +30,7 @@ export function InvestmentsClient() {
   const [positions,  setPositions]  = useState<EnrichedPosition[]>([])
   const [loading,    setLoading]    = useState(true)
   const [addOpen,    setAddOpen]    = useState(false)
+  const [fabOpen,    setFabOpen]    = useState(false)
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -60,21 +61,60 @@ export function InvestmentsClient() {
       onClose={() => setAddOpen(false)}
       onSaved={fetchAll}
     />
+
+    {/* FAB — mobile only */}
+    <div className="sm:hidden fixed bottom-20 right-4 z-50 flex flex-col items-end gap-3">
+      {/* Sub-actions */}
+      {fabOpen && (
+        <>
+          <div className="flex items-center gap-2">
+            <span className="bg-zinc-800 text-zinc-100 text-xs font-medium px-2.5 py-1 rounded-full shadow">Importar Extrato</span>
+            <Link
+              href="/investments/upload"
+              onClick={() => setFabOpen(false)}
+              className="h-12 w-12 rounded-full bg-zinc-700 hover:bg-zinc-600 text-white shadow-lg flex items-center justify-center transition-colors"
+            >
+              <Upload className="h-5 w-5" />
+            </Link>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="bg-zinc-800 text-zinc-100 text-xs font-medium px-2.5 py-1 rounded-full shadow">Adicionar</span>
+            <button
+              onClick={() => { setFabOpen(false); setAddOpen(true) }}
+              className="h-12 w-12 rounded-full bg-zinc-700 hover:bg-zinc-600 text-white shadow-lg flex items-center justify-center transition-colors"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+          </div>
+        </>
+      )}
+      {/* Main FAB */}
+      <button
+        onClick={() => setFabOpen(o => !o)}
+        className="h-14 w-14 rounded-full bg-purple-600 hover:bg-purple-500 text-white shadow-xl flex items-center justify-center transition-all"
+      >
+        {fabOpen
+          ? <X className="h-6 w-6" />
+          : <Plus className="h-6 w-6" />
+        }
+      </button>
+    </div>
+
     <div className="p-6 space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-zinc-100">Investimentos</h1>
           <p className="text-zinc-500 text-sm">Carteira e desempenho da sua conta XP</p>
         </div>
-        <div className="flex gap-2 shrink-0">
+        <div className="hidden sm:flex gap-2 shrink-0">
           <Button size="sm" className="gap-2" onClick={() => setAddOpen(true)}>
             <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Adicionar</span>
+            Adicionar
           </Button>
           <Button asChild variant="outline" size="sm" className="gap-2">
             <Link href="/investments/upload">
               <Upload className="h-4 w-4" />
-              <span className="hidden sm:inline">Importar Extrato</span>
+              Importar Extrato
             </Link>
           </Button>
         </div>

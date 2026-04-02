@@ -57,6 +57,33 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(created.rows[0], { status: 201 })
 }
 
+export async function PUT(req: NextRequest) {
+  const { id, name, type, color } = await req.json()
+  if (!id || !name || !type) return NextResponse.json({ error: 'id, name e type obrigatórios' }, { status: 400 })
+
+  await db.execute({
+    sql: 'UPDATE categories SET name = ?, type = ?, color = ? WHERE id = ?',
+    args: [name, type, color ?? null, id],
+  })
+
+  const updated = await db.execute({
+    sql: 'SELECT * FROM categories WHERE id = ?',
+    args: [id],
+  })
+  return NextResponse.json(updated.rows[0])
+}
+
+export async function DELETE(req: NextRequest) {
+  const { id } = await req.json()
+  if (!id) return NextResponse.json({ error: 'id obrigatório' }, { status: 400 })
+
+  await db.execute({
+    sql: 'UPDATE categories SET active = 0 WHERE id = ?',
+    args: [id],
+  })
+  return NextResponse.json({ success: true })
+}
+
 export async function PATCH(req: NextRequest) {
   const { category, month, budget } = await req.json()
   if (!category || !month || budget === undefined) {

@@ -37,9 +37,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'month, section e item_name obrigatórios' }, { status: 400 })
   }
 
+  // Ensure the name is unique within the month
+  let uniqueName = item_name
+  let attempt = 1
+  while (true) {
+    const existing = await db.execute({
+      sql: 'SELECT id FROM monthly_checklist WHERE month = ? AND item_name = ?',
+      args: [month, uniqueName],
+    })
+    if (existing.rows.length === 0) break
+    attempt++
+    uniqueName = `${item_name} ${attempt}`
+  }
+
   const result = await db.execute({
     sql: 'INSERT INTO monthly_checklist (month, item_name, section, expected_value) VALUES (?, ?, ?, NULL)',
-    args: [month, item_name, section],
+    args: [month, uniqueName, section],
   })
 
   const created = await db.execute({
