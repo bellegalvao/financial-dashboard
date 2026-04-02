@@ -74,14 +74,16 @@ export function TransactionTable({ transactions, month, onRefresh }: Props) {
           </SelectContent>
         </Select>
 
-        <Button
-          size="sm"
-          onClick={() => { setEditing(null); setFormOpen(true) }}
-          className="gap-1"
-        >
-          <Plus className="h-4 w-4" />
-          Adicionar
-        </Button>
+        <div className="hidden sm:block">
+          <Button
+            size="sm"
+            onClick={() => { setEditing(null); setFormOpen(true) }}
+            className="gap-1"
+          >
+            <Plus className="h-4 w-4" />
+            Adicionar
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-lg border border-zinc-800 overflow-hidden">

@@ -20,6 +20,13 @@ const SECTION_COLORS: Record<ChecklistSection, string> = {
   parcelados:   'text-blue-400 border-blue-800 bg-blue-950/30',
 }
 
+const TAB_ACTIVE: Record<ChecklistSection, string> = {
+  entradas:     'border-emerald-500 text-emerald-400',
+  contas_fixas: 'border-amber-500 text-amber-400',
+  investimento: 'border-purple-500 text-purple-400',
+  parcelados:   'border-blue-500 text-blue-400',
+}
+
 interface Props {
   items: ChecklistItem[]
   onToggle: (id: number, checked: boolean) => void
@@ -33,6 +40,7 @@ export function MonthlySummaryChecklist({
   items, onToggle, onValueChange, onNameChange, onAddItem, onDeleteItem,
 }: Props) {
   const sections: ChecklistSection[] = ['entradas', 'contas_fixas', 'investimento', 'parcelados']
+  const [activeSection, setActiveSection] = useState<ChecklistSection>('contas_fixas')
   const [editingNameId, setEditingNameId] = useState<number | null>(null)
 
   async function handleAdd(section: ChecklistSection) {
@@ -40,45 +48,70 @@ export function MonthlySummaryChecklist({
     setEditingNameId(id)
   }
 
-  return (
-    <div className="space-y-3">
-      {sections.map((section) => {
-        const sectionItems = items.filter((i) => i.section === section)
-        const colors = SECTION_COLORS[section]
+  const sectionItems = items.filter((i) => i.section === activeSection)
+  const colors = SECTION_COLORS[activeSection]
 
-        return (
-          <div key={section} className={`rounded-lg border p-3 ${colors}`}>
-            <h3 className="text-xs font-bold uppercase tracking-wider mb-2">
-              {SECTION_LABELS[section]}
-            </h3>
-            <div className="space-y-1.5">
-              {sectionItems.map((item) => (
-                <ChecklistRow
-                  key={item.id}
-                  item={item}
-                  isEditingName={editingNameId === item.id}
-                  onStartEditName={() => setEditingNameId(item.id)}
-                  onCommitName={(name) => {
-                    setEditingNameId(null)
-                    onNameChange(item.id, name)
-                  }}
-                  onCancelEditName={() => setEditingNameId(null)}
-                  onToggle={onToggle}
-                  onValueChange={onValueChange}
-                  onDelete={() => onDeleteItem(item.id)}
-                />
-              ))}
-            </div>
+  // Badge counts
+  const counts = Object.fromEntries(
+    sections.map((s) => [s, items.filter((i) => i.section === s).length])
+  ) as Record<ChecklistSection, number>
+
+  return (
+    <div className="space-y-0 rounded-lg border border-zinc-800 bg-zinc-900/50 overflow-hidden">
+      {/* Tab bar */}
+      <div className="flex border-b border-zinc-800 overflow-x-auto scrollbar-none">
+        {sections.map((s) => {
+          const isActive = s === activeSection
+          return (
             <button
-              onClick={() => handleAdd(section)}
-              className="mt-2 flex items-center gap-1 text-xs opacity-40 hover:opacity-80 transition-opacity"
+              key={s}
+              onClick={() => setActiveSection(s)}
+              className={`flex-1 min-w-0 px-2 py-2.5 text-xs font-semibold whitespace-nowrap border-b-2 transition-colors ${
+                isActive
+                  ? `${TAB_ACTIVE[s]} bg-zinc-800/50`
+                  : 'border-transparent text-zinc-500 hover:text-zinc-300'
+              }`}
             >
-              <Plus size={11} />
-              adicionar
+              {SECTION_LABELS[s]}
+              {counts[s] > 0 && (
+                <span className="ml-1 opacity-50 font-normal">{counts[s]}</span>
+              )}
             </button>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
+
+      {/* Content */}
+      <div className={`p-3 rounded-b-lg ${colors}`}>
+        <div className="space-y-1.5">
+          {sectionItems.length === 0 && (
+            <p className="text-xs opacity-40 py-2 text-center">Nenhum item</p>
+          )}
+          {sectionItems.map((item) => (
+            <ChecklistRow
+              key={item.id}
+              item={item}
+              isEditingName={editingNameId === item.id}
+              onStartEditName={() => setEditingNameId(item.id)}
+              onCommitName={(name) => {
+                setEditingNameId(null)
+                onNameChange(item.id, name)
+              }}
+              onCancelEditName={() => setEditingNameId(null)}
+              onToggle={onToggle}
+              onValueChange={onValueChange}
+              onDelete={() => onDeleteItem(item.id)}
+            />
+          ))}
+        </div>
+        <button
+          onClick={() => handleAdd(activeSection)}
+          className="mt-2 flex items-center gap-1 text-xs opacity-40 hover:opacity-80 transition-opacity"
+        >
+          <Plus size={11} />
+          adicionar
+        </button>
+      </div>
     </div>
   )
 }
@@ -111,7 +144,6 @@ function ChecklistRow({
   const valueRef = useRef<HTMLInputElement>(null)
   const nameRef  = useRef<HTMLInputElement>(null)
 
-  // Focus name input when entering name-edit mode
   if (isEditingName) {
     setTimeout(() => nameRef.current?.select(), 0)
   }
@@ -140,7 +172,6 @@ function ChecklistRow({
 
   return (
     <div className="flex items-center justify-between gap-1 group/row">
-      {/* Left: checkbox + name */}
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <Checkbox
           checked={optimistic}
@@ -177,7 +208,6 @@ function ChecklistRow({
         )}
       </div>
 
-      {/* Right: value + delete */}
       <div className="flex items-center gap-1 shrink-0">
         {editingValue ? (
           <input
