@@ -20,11 +20,11 @@ const SECTION_COLORS: Record<ChecklistSection, string> = {
   parcelados:   'text-blue-400 border-blue-800 bg-blue-950/30',
 }
 
-const TAB_ACTIVE: Record<ChecklistSection, string> = {
-  entradas:     'border-emerald-500 text-emerald-400',
-  contas_fixas: 'border-amber-500 text-amber-400',
-  investimento: 'border-purple-500 text-purple-400',
-  parcelados:   'border-blue-500 text-blue-400',
+const CHIP_ACTIVE: Record<ChecklistSection, string> = {
+  entradas:     'bg-emerald-500/20 border-emerald-500 text-emerald-400',
+  contas_fixas: 'bg-amber-500/20   border-amber-500   text-amber-400',
+  investimento: 'bg-purple-500/20  border-purple-500  text-purple-400',
+  parcelados:   'bg-blue-500/20    border-blue-500    text-blue-400',
 }
 
 interface Props {
@@ -57,24 +57,26 @@ export function MonthlySummaryChecklist({
   ) as Record<ChecklistSection, number>
 
   return (
-    <div className="space-y-0 rounded-lg border border-zinc-800 bg-zinc-900/50 overflow-hidden">
-      {/* Tab bar */}
-      <div className="flex border-b border-zinc-800 overflow-x-auto scrollbar-none">
+    <div className="space-y-3">
+      {/* Chips */}
+      <div className="flex flex-wrap gap-2">
         {sections.map((s) => {
           const isActive = s === activeSection
           return (
             <button
               key={s}
               onClick={() => setActiveSection(s)}
-              className={`flex-1 min-w-0 px-2 py-2.5 text-xs font-semibold whitespace-nowrap border-b-2 transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors ${
                 isActive
-                  ? `${TAB_ACTIVE[s]} bg-zinc-800/50`
-                  : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                  ? CHIP_ACTIVE[s]
+                  : 'border-zinc-700 text-zinc-500 hover:text-zinc-300 hover:border-zinc-500'
               }`}
             >
               {SECTION_LABELS[s]}
               {counts[s] > 0 && (
-                <span className="ml-1 opacity-50 font-normal">{counts[s]}</span>
+                <span className={`text-[10px] font-bold rounded-full px-1 ${isActive ? 'opacity-70' : 'opacity-40'}`}>
+                  {counts[s]}
+                </span>
               )}
             </button>
           )
@@ -82,7 +84,7 @@ export function MonthlySummaryChecklist({
       </div>
 
       {/* Content */}
-      <div className={`p-3 rounded-b-lg ${colors}`}>
+      <div className={`p-3 rounded-lg border ${colors}`}>
         <div className="space-y-1.5">
           {sectionItems.length === 0 && (
             <p className="text-xs opacity-40 py-2 text-center">Nenhum item</p>
