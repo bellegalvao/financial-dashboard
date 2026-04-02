@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { SidebarLayout } from '@/components/layout/SidebarLayout'
 import { Toaster } from '@/components/ui/sonner'
+import { PrivacyProvider } from '@/lib/privacy-context'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -15,7 +16,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className={`dark h-full ${inter.className}`} suppressHydrationWarning>
       <body className="h-full bg-zinc-950 text-zinc-100" suppressHydrationWarning>
-        <SidebarLayout>{children}</SidebarLayout>
+        <PrivacyProvider>
+          <SidebarLayout>{children}</SidebarLayout>
+        </PrivacyProvider>
         <Toaster richColors position="top-right" />
       </body>
     </html>

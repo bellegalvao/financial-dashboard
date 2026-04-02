@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, CreditCard, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react'
+import { LayoutDashboard, CreditCard, TrendingUp, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { usePrivacy } from '@/lib/privacy-context'
 
 const NAV = [
   { href: '/dashboard',   label: 'Dashboard',    icon: LayoutDashboard },
@@ -16,6 +17,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const { hidden, toggle: togglePrivacy } = usePrivacy()
 
   useEffect(() => {
     const saved = localStorage.getItem('sidebar-collapsed')
@@ -84,13 +86,22 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
           collapsed ? 'py-4 justify-center' : 'px-5 py-4 justify-between'
         )}>
           {!collapsed && <p className="text-zinc-500 text-xs truncate">Isabelle Galvão</p>}
-          <button
-            onClick={toggle}
-            title={collapsed ? 'Expandir menu' : 'Minimizar menu'}
-            className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors shrink-0"
-          >
-            {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={togglePrivacy}
+              title={hidden ? 'Mostrar valores' : 'Ocultar valores'}
+              className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
+            >
+              {hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+            <button
+              onClick={toggle}
+              title={collapsed ? 'Expandir menu' : 'Minimizar menu'}
+              className="p-1 rounded text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
+            >
+              {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -123,6 +134,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
           )
         })}
       </nav>
+
     </div>
   )
 }

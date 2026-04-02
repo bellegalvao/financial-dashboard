@@ -7,7 +7,8 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
-import { formatBRL, formatPercent } from '@/lib/utils'
+import { formatBRL, formatPercent, privateBRL } from '@/lib/utils'
+import { usePrivacy } from '@/lib/privacy-context'
 import { ASSET_TYPE_LABELS, ASSET_TYPES } from '@/lib/constants'
 import type { AssetType, RendaFixaSubtype } from '@/lib/types'
 
@@ -62,6 +63,7 @@ async function patchPosition(id: number, payload: Record<string, unknown>) {
 }
 
 export function PositionsTable({ positions, total, onRefresh }: Props) {
+  const { hidden } = usePrivacy()
   // Individual edit
   const [editingId,     setEditingId]     = useState<number | null>(null)
   const [draftTicker,   setDraftTicker]   = useState('')
@@ -216,19 +218,19 @@ export function PositionsTable({ positions, total, onRefresh }: Props) {
                 {type === 'cripto' && group[0]?.current_price && (
                   <span className="flex items-center gap-1 rounded-full border border-amber-700/60 bg-amber-950/30 px-2 py-0.5 text-[10px] font-mono text-amber-300">
                     <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-                    BTC {formatBRL(group[0].current_price)}
+                    BTC {privateBRL(group[0].current_price!, hidden)}
                   </span>
                 )}
                 {type === 'dolar' && group[0]?.current_price && (
                   <span className="flex items-center gap-1 rounded-full border border-green-700/60 bg-green-950/30 px-2 py-0.5 text-[10px] font-mono text-green-300">
                     <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
-                    USD {formatBRL(group[0].current_price)}
+                    USD {privateBRL(group[0].current_price!, hidden)}
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xs font-mono opacity-70">{group.length} posições</span>
-                <span className="text-sm font-mono font-semibold">{formatBRL(groupTotal)}</span>
+                <span className="text-sm font-mono font-semibold">{privateBRL(groupTotal, hidden)}</span>
                 <span className="text-xs font-mono opacity-60">
                   {total > 0 ? formatPercent(groupTotal / total * 100) : '—'}
                 </span>
@@ -338,12 +340,12 @@ export function PositionsTable({ positions, total, onRefresh }: Props) {
                             className="w-24 bg-zinc-800 border border-zinc-600 rounded px-1.5 py-0.5 text-xs font-mono text-zinc-100 outline-none text-right"
                           />
                         ) : (
-                          formatBRL(pos.avg_price)
+                          privateBRL(pos.avg_price, hidden)
                         )}
                       </TableCell>
                       <TableCell className="text-right text-sm font-mono font-semibold">
                         <div className="flex flex-col items-end gap-0.5">
-                          {formatBRL(pos.current_value)}
+                          {privateBRL(pos.current_value, hidden)}
                           {pos.current_price && pos.avg_price > 0 && (() => {
                             const pnl = (pos.current_price - pos.avg_price) / pos.avg_price * 100
                             const positive = pnl >= 0

@@ -3,7 +3,8 @@
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid,
 } from 'recharts'
-import { formatBRL } from '@/lib/utils'
+import { formatBRL, HIDDEN_VALUE } from '@/lib/utils'
+import { usePrivacy } from '@/lib/privacy-context'
 import type { CategoryWithBudget } from '@/lib/types'
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function CategoryBreakdownChart({ data }: Props) {
+  const { hidden } = usePrivacy()
   const chartData = data
     .filter((c) => c.real > 0 || c.budget > 0)
     .map((c) => ({
@@ -47,7 +49,7 @@ export function CategoryBreakdownChart({ data }: Props) {
         <Tooltip
           contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px', fontSize: 12 }}
           cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-          formatter={(val: unknown) => formatBRL(val as number)}
+          formatter={(val: unknown) => hidden ? HIDDEN_VALUE : formatBRL(val as number)}
         />
         <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
         <Bar dataKey="Previsão" fill="#3f3f46" radius={[3, 3, 0, 0]} />

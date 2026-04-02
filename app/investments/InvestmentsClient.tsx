@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Plus, Upload, X } from 'lucide-react'
+import { PrivacyToggle } from '@/components/layout/PrivacyToggle'
 import { Button } from '@/components/ui/button'
 import { AllocationPieChart } from '@/components/investments/AllocationPieChart'
 import { PatrimonioLineChart } from '@/components/investments/PatrimonioLineChart'
@@ -105,6 +106,9 @@ export function InvestmentsClient() {
         <div>
           <h1 className="text-xl font-bold text-zinc-100">Investimentos</h1>
           <p className="text-zinc-500 text-sm">Carteira e desempenho da sua conta XP</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <PrivacyToggle />
         </div>
         <div className="hidden sm:flex gap-2 shrink-0">
           <Button size="sm" className="gap-2" onClick={() => setAddOpen(true)}>

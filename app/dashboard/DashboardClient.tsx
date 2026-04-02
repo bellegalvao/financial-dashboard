@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { TrendingUp, Wallet, PiggyBank, ArrowDownCircle, Plus, LineChart, X } from 'lucide-react'
+import { PrivacyToggle } from '@/components/layout/PrivacyToggle'
 import { KpiCard } from '@/components/dashboard/KpiCard'
 import { AllocationPieChart } from '@/components/investments/AllocationPieChart'
 import { PatrimonioLineChart } from '@/components/investments/PatrimonioLineChart'
@@ -91,6 +92,8 @@ export function DashboardClient() {
             <h1 className="text-xl font-bold text-zinc-100">Dashboard</h1>
             <p className="text-zinc-500 text-sm">Visão geral · {monthLabel(data.month)}</p>
           </div>
+          <div className="flex items-center gap-2">
+          <PrivacyToggle />
           {/* Desktop shortcut buttons — hidden on mobile (FAB handles it) */}
           <div className="hidden sm:flex gap-2 shrink-0">
             <Button size="sm" variant="outline" className="gap-2" onClick={() => setTxFormOpen(true)}>
@@ -101,6 +104,7 @@ export function DashboardClient() {
               <LineChart className="h-4 w-4" />
               Novo ativo
             </Button>
+          </div>
           </div>
         </div>
 

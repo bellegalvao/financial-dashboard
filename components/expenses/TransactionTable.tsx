@@ -13,7 +13,8 @@ import {
 } from '@/components/ui/select'
 
 import { TransactionForm } from './TransactionForm'
-import { formatBRL } from '@/lib/utils'
+import { privateBRL } from '@/lib/utils'
+import { usePrivacy } from '@/lib/privacy-context'
 import { PAYMENT_METHOD_LABELS } from '@/lib/constants'
 import type { Transaction, TransactionType } from '@/lib/types'
 
@@ -39,6 +40,7 @@ export function TransactionTable({ transactions, month, onRefresh }: Props) {
   const [formOpen,  setFormOpen]  = useState(false)
   const [editing,   setEditing]   = useState<Transaction | null>(null)
   const [typeFilter, setTypeFilter] = useState<string>('all')
+  const { hidden } = usePrivacy()
 
   const filtered = typeFilter === 'all'
     ? transactions
@@ -133,7 +135,7 @@ export function TransactionTable({ transactions, month, onRefresh }: Props) {
                   <TableCell className={`text-right font-mono font-semibold text-sm whitespace-nowrap ${
                     tx.type === 'entrada' ? 'text-emerald-400' : 'text-red-400'
                   }`}>
-                    {tx.type === 'entrada' ? '+' : '-'}{formatBRL(tx.value)}
+                    {tx.type === 'entrada' ? '+' : '-'}{privateBRL(tx.value, hidden)}
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1 justify-end">

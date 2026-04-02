@@ -9,6 +9,7 @@ import { MonthlyKpiPanel, DiinheiroEmContaCard, EntradasCard, SaidasCard, Balanc
 import { CategoryBreakdownChart } from '@/components/expenses/CategoryBreakdownChart'
 import { TransactionForm } from '@/components/expenses/TransactionForm'
 import { CategoriesManager } from '@/components/expenses/CategoriesManager'
+import { PrivacyToggle } from '@/components/layout/PrivacyToggle'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import type { Transaction, MonthlySummary, ChecklistSection } from '@/lib/types'
 
@@ -112,7 +113,10 @@ export function ExpensesClient({ month }: Props) {
             <h1 className="text-xl font-bold text-zinc-100">Controle de Gastos</h1>
             <p className="text-zinc-500 text-sm">Gerencie suas receitas e despesas mensais</p>
           </div>
-          <MonthPicker value={month} />
+          <div className="flex items-center gap-2">
+            <PrivacyToggle />
+            <MonthPicker value={month} />
+          </div>
         </div>
 
         {loading ? (

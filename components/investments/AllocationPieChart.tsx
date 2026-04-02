@@ -1,7 +1,8 @@
 'use client'
 
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { formatBRL, formatPercent } from '@/lib/utils'
+import { formatBRL, formatPercent, privateBRL, HIDDEN_VALUE } from '@/lib/utils'
+import { usePrivacy } from '@/lib/privacy-context'
 import { ASSET_TYPE_LABELS, ASSET_TYPE_COLORS } from '@/lib/constants'
 import type { AssetType } from '@/lib/types'
 
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function AllocationPieChart({ allocation, total }: Props) {
+  const { hidden } = usePrivacy()
   const data = (Object.entries(allocation) as [AssetType, { value: number; pct: number }][])
     .filter(([, a]) => a.value > 0)
     .map(([type, a]) => ({
@@ -54,7 +56,7 @@ export function AllocationPieChart({ allocation, total }: Props) {
             contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px', fontSize: 12 }}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             formatter={(val: unknown, name: unknown, props: any) =>
-              [`${formatBRL(val as number)} (${formatPercent(props.payload.pct)})`, name as string]
+              [hidden ? HIDDEN_VALUE : `${formatBRL(val as number)} (${formatPercent(props.payload.pct)})`, name as string]
             }
           />
           <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
@@ -63,7 +65,7 @@ export function AllocationPieChart({ allocation, total }: Props) {
 
       <div className="text-center">
         <p className="text-xs text-zinc-500">Total da carteira</p>
-        <p className="text-lg font-bold text-zinc-100">{formatBRL(total)}</p>
+        <p className="text-lg font-bold text-zinc-100">{privateBRL(total, hidden)}</p>
       </div>
     </div>
   )

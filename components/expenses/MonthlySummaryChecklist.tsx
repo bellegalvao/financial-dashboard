@@ -3,7 +3,8 @@
 import { useRef, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
-import { formatBRL } from '@/lib/utils'
+import { formatBRL, privateBRL } from '@/lib/utils'
+import { usePrivacy } from '@/lib/privacy-context'
 import type { ChecklistItem, ChecklistSection } from '@/lib/types'
 
 const SECTION_LABELS: Record<ChecklistSection, string> = {
@@ -175,6 +176,7 @@ function ChecklistRow({
   onDelete: () => void
 }) {
   const [optimistic, setOptimistic] = useState(item.checked === 1)
+  const { hidden } = usePrivacy()
   const [editingValue, setEditingValue] = useState(false)
   const [inputVal, setInputVal] = useState(
     item.expected_value != null ? String(item.expected_value) : ''
@@ -278,7 +280,7 @@ function ChecklistRow({
               displayValue != null ? 'opacity-60' : 'opacity-20 italic'
             }`}
           >
-            {displayValue != null ? formatBRL(displayValue) : 'R$ —'}
+            {displayValue != null ? privateBRL(displayValue, hidden) : 'R$ —'}
           </span>
         )}
 

@@ -1,4 +1,5 @@
-import { formatBRL } from '@/lib/utils'
+import { privateBRL } from '@/lib/utils'
+import { usePrivacy } from '@/lib/privacy-context'
 import type { MonthlySummary } from '@/lib/types'
 
 interface Props {
@@ -6,13 +7,14 @@ interface Props {
 }
 
 export function DiinheiroEmContaCard({ value }: { value: number }) {
+  const { hidden } = usePrivacy()
   return (
     <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-center">
       <p className="text-xs text-white uppercase tracking-wider font-bold mb-1">
         Dinheiro em conta
       </p>
       <p className={`text-lg sm:text-2xl font-bold leading-tight ${value >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-        {formatBRL(value)}
+        {privateBRL(value, hidden)}
       </p>
     </div>
   )
@@ -99,13 +101,14 @@ function KpiRow({
   positive?: boolean
   bold?: boolean
 }) {
+  const { hidden } = usePrivacy()
   return (
     <div className={`flex items-center justify-between ${bold ? 'border-t border-current/20 pt-1 mt-1' : ''}`}>
       <span className={`text-xs text-zinc-400 ${bold ? 'font-semibold text-zinc-300' : ''}`}>{label}</span>
       <span className={`text-xs font-mono ${bold ? 'font-bold text-zinc-100' : ''} ${
         value > 0 && positive ? 'text-emerald-400' : value > 0 ? 'text-zinc-200' : 'text-zinc-500'
       }`}>
-        {formatBRL(value)}
+        {privateBRL(value, hidden)}
       </span>
     </div>
   )

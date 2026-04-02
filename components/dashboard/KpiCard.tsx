@@ -1,4 +1,5 @@
-import { formatBRL } from '@/lib/utils'
+import { privateBRL } from '@/lib/utils'
+import { usePrivacy } from '@/lib/privacy-context'
 import type { LucideIcon } from 'lucide-react'
 
 interface Props {
@@ -27,6 +28,7 @@ const ICON_STYLES = {
 }
 
 export function KpiCard({ label, value, icon: Icon, accent = 'zinc', positive }: Props) {
+  const { hidden } = usePrivacy()
   const valueColor = positive !== undefined
     ? (value >= 0 ? 'text-emerald-400' : 'text-red-400')
     : 'text-zinc-100'
@@ -38,7 +40,7 @@ export function KpiCard({ label, value, icon: Icon, accent = 'zinc', positive }:
         {Icon && <Icon className={`h-4 w-4 ${ICON_STYLES[accent]}`} />}
       </div>
       <p className={`text-base sm:text-2xl font-bold font-mono leading-tight ${valueColor}`}>
-        {formatBRL(value)}
+        {privateBRL(value, hidden)}
       </p>
     </div>
   )

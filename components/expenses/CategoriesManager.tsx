@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, Check, X } from 'lucide-react'
+import { usePrivacy } from '@/lib/privacy-context'
+import { HIDDEN_VALUE } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -144,6 +146,7 @@ export function CategoriesManager({ month }: Props) {
     return <div className="flex items-center justify-center h-32 text-zinc-500">Carregando...</div>
   }
 
+  const { hidden } = usePrivacy()
   const filtered = typeFilter === 'all'
     ? categories
     : categories.filter((c) => c.type === typeFilter)
@@ -322,7 +325,7 @@ export function CategoriesManager({ month }: Props) {
                     </td>
                     <td className="px-4 py-2.5 text-right font-mono text-zinc-300 text-xs">
                       {cat.budget > 0
-                        ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cat.budget)
+                        ? (hidden ? HIDDEN_VALUE : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cat.budget))
                         : <span className="text-zinc-600">—</span>
                       }
                     </td>

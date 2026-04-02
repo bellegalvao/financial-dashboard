@@ -3,7 +3,8 @@
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
-import { formatBRL, monthLabel } from '@/lib/utils'
+import { formatBRL, monthLabel, HIDDEN_VALUE } from '@/lib/utils'
+import { usePrivacy } from '@/lib/privacy-context'
 import type { PatrimonioSnapshot } from '@/lib/types'
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function PatrimonioLineChart({ snapshots }: Props) {
+  const { hidden } = usePrivacy()
   if (!snapshots.length) {
     return (
       <div className="flex items-center justify-center h-48 text-zinc-500 text-sm">
@@ -48,12 +50,12 @@ export function PatrimonioLineChart({ snapshots }: Props) {
           tick={{ fontSize: 10, fill: '#a1a1aa' }}
           axisLine={false}
           tickLine={false}
-          tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
+          tickFormatter={(v) => hidden ? '•••' : `R$${(v / 1000).toFixed(0)}k`}
           width={52}
         />
         <Tooltip
           contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px', fontSize: 12 }}
-          formatter={(val: unknown) => [formatBRL(val as number)]}
+          formatter={(val: unknown) => [hidden ? HIDDEN_VALUE : formatBRL(val as number)]}
         />
         <Area
           type="monotone"

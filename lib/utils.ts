@@ -16,6 +16,12 @@ export function formatBRL(value: number): string {
   }).format(value)
 }
 
+export const HIDDEN_VALUE = 'R$ •••••'
+
+export function privateBRL(value: number, hidden: boolean): string {
+  return hidden ? HIDDEN_VALUE : formatBRL(value)
+}
+
 export function formatPercent(value: number, decimals = 1): string {
   return `${value.toFixed(decimals)}%`
 }

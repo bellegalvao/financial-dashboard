@@ -9,7 +9,8 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
-import { formatBRL, monthLabel } from '@/lib/utils'
+import { formatBRL, monthLabel, privateBRL, HIDDEN_VALUE } from '@/lib/utils'
+import { usePrivacy } from '@/lib/privacy-context'
 
 interface DividendRow {
   month:      string
@@ -38,6 +39,7 @@ export function ProventosCard() {
   const [totalYear,     setTotalYear]     = useState(0)
   const [selectedMonth, setSelectedMonth] = useState<ByMonth | null>(null)
   const [loading,       setLoading]       = useState(true)
+  const { hidden } = usePrivacy()
   const [detailOpen,    setDetailOpen]    = useState(false)
   const [confirmClear,  setConfirmClear]  = useState(false)
   const [detailView,    setDetailView]    = useState<'ativo' | 'mes'>('ativo')
@@ -100,7 +102,7 @@ export function ProventosCard() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Proventos</h2>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold font-mono text-emerald-400">{formatBRL(totalYear)}</span>
+            <span className="text-sm font-semibold font-mono text-emerald-400">{privateBRL(totalYear, hidden)}</span>
             <button
               onClick={() => setDetailOpen(true)}
               className="text-zinc-500 hover:text-zinc-200 transition-colors"
@@ -164,7 +166,7 @@ export function ProventosCard() {
                 <Tooltip
                   contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: '8px', fontSize: 11 }}
                   itemStyle={{ color: '#34d399' }}
-                  formatter={(val: unknown) => [formatBRL(val as number), 'Proventos']}
+                  formatter={(val: unknown) => [hidden ? HIDDEN_VALUE : formatBRL(val as number), 'Proventos']}
                   cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                 />
                 <Bar dataKey="total" radius={[3, 3, 0, 0]} style={{ cursor: 'pointer' }}>
@@ -187,7 +189,7 @@ export function ProventosCard() {
                     {monthLabel(selectedMonth.month)}
                   </span>
                   <span className="text-xs font-mono font-semibold text-emerald-400">
-                    {formatBRL(selectedMonth.total)}
+                    {privateBRL(selectedMonth.total, hidden)}
                   </span>
                 </div>
                 <div className="space-y-1 max-h-32 overflow-y-auto">
@@ -197,7 +199,7 @@ export function ProventosCard() {
                     .map((item) => (
                       <div key={item.ticker} className="flex items-center justify-between">
                         <span className="text-xs font-mono text-zinc-300">{item.ticker}</span>
-                        <span className="text-xs font-mono text-emerald-400">{formatBRL(item.amount)}</span>
+                        <span className="text-xs font-mono text-emerald-400">{privateBRL(item.amount, hidden)}</span>
                       </div>
                     ))}
                 </div>
@@ -274,7 +276,7 @@ export function ProventosCard() {
                       <div key={row.ticker} className="grid grid-cols-[1fr_80px_110px] gap-2 items-center py-1 border-b border-zinc-800/60 last:border-0">
                         <span className="text-sm font-mono font-semibold text-zinc-200">{row.ticker}</span>
                         <span className="text-xs text-zinc-500 capitalize">{row.asset_type.replace('_', ' ')}</span>
-                        <span className="text-sm font-mono text-emerald-400 text-right">{formatBRL(row.total)}</span>
+                        <span className="text-sm font-mono text-emerald-400 text-right">{privateBRL(row.total, hidden)}</span>
                       </div>
                     ))}
                   </div>
@@ -285,7 +287,7 @@ export function ProventosCard() {
                     <div key={m.month}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-semibold text-zinc-300">{monthLabel(m.month)}</span>
-                        <span className="text-xs font-mono font-semibold text-emerald-400">{formatBRL(m.total)}</span>
+                        <span className="text-xs font-mono font-semibold text-emerald-400">{privateBRL(m.total, hidden)}</span>
                       </div>
                       <div className="space-y-1 pl-2 border-l border-zinc-800">
                         {m.items
@@ -294,7 +296,7 @@ export function ProventosCard() {
                           .map((item) => (
                             <div key={item.ticker} className="flex items-center justify-between">
                               <span className="text-xs font-mono text-zinc-400">{item.ticker}</span>
-                              <span className="text-xs font-mono text-emerald-400">{formatBRL(item.amount)}</span>
+                              <span className="text-xs font-mono text-emerald-400">{privateBRL(item.amount, hidden)}</span>
                             </div>
                           ))}
                       </div>
@@ -307,7 +309,7 @@ export function ProventosCard() {
               <div className="grid grid-cols-[1fr_110px] gap-2 px-1 pt-2 mt-1 border-t border-zinc-700">
                 <span className="text-xs font-semibold text-zinc-400">Total</span>
                 <span className="text-sm font-mono font-bold text-emerald-400 text-right">
-                  {formatBRL(byTicker.reduce((s, r) => s + r.total, 0))}
+                  {privateBRL(byTicker.reduce((s, r) => s + r.total, 0), hidden)}
                 </span>
               </div>
             </div>
