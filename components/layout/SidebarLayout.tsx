@@ -36,7 +36,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
       <aside
         className={cn(
           'hidden md:flex fixed left-0 top-0 h-screen bg-zinc-900 border-r border-zinc-800 flex-col z-40 transition-all duration-200',
-          collapsed ? 'w-14' : 'w-56'
+          mounted && collapsed ? 'w-14' : 'w-56'
         )}
       >
         {/* Logo */}
@@ -98,7 +98,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
       <main
         className={cn(
           'flex-1 min-h-screen overflow-x-hidden transition-all duration-200 pb-20 md:pb-0',
-          collapsed ? 'md:ml-14' : 'md:ml-56'
+          mounted && collapsed ? 'md:ml-14' : 'md:ml-56'
         )}
       >
         {children}
