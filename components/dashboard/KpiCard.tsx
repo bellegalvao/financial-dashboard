@@ -37,7 +37,7 @@ export function KpiCard({ label, value, icon: Icon, accent = 'zinc', positive }:
         <p className="text-xs text-zinc-400 font-medium uppercase tracking-wider">{label}</p>
         {Icon && <Icon className={`h-4 w-4 ${ICON_STYLES[accent]}`} />}
       </div>
-      <p className={`text-2xl font-bold font-mono ${valueColor}`}>
+      <p className={`text-base sm:text-2xl font-bold font-mono leading-tight ${valueColor}`}>
         {formatBRL(value)}
       </p>
     </div>
