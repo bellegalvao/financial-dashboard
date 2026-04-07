@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Financial Dashboard
 
-## Getting Started
+Dashboard financeiro pessoal para controle de gastos, investimentos e proventos. Desenvolvido com Next.js 16, React 19 e banco de dados na edge com Turso.
 
-First, run the development server:
+## Funcionalidades
+
+- **Dashboard** — visão geral do mês com KPIs de saldo, gastos e patrimônio
+- **Gastos** — registro de transações, categorização, gráfico por categoria e checklist mensal
+- **Investimentos** — posições em carteira, alocação por ativo, evolução do patrimônio e histórico de proventos
+- **Importação XP** — upload de extrato da XP Investimentos (.xlsx) com parser automático
+- **Privacy toggle** — oculta todos os valores financeiros com um clique
+- **Responsivo** — layout adaptado para mobile e desktop com sidebar recolhível
+- **Temas** — suporte a modo claro e escuro
+
+## Tech Stack
+
+| Camada | Tecnologia |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| UI | React 19 + TypeScript |
+| Estilo | Tailwind CSS v4 + shadcn/ui |
+| Gráficos | Recharts |
+| Banco de dados | Turso (libSQL / SQLite na edge) |
+| Formulários | React Hook Form + Zod |
+| Deploy | Vercel |
+
+## Rodando localmente
+
+### Pré-requisitos
+
+- Node.js 18+
+- Conta no [Turso](https://turso.tech) (gratuita)
+
+### 1. Clone o repositório
+
+```bash
+git clone https://github.com/bellegalvao/financial-dashboard.git
+cd financial-dashboard
+```
+
+### 2. Instale as dependências
+
+```bash
+npm install
+```
+
+### 3. Configure as variáveis de ambiente
+
+Crie um arquivo `.env.local` na raiz do projeto:
+
+```env
+TURSO_DATABASE_URL=libsql://seu-banco.turso.io
+TURSO_AUTH_TOKEN=seu-token
+```
+
+Para obter esses valores, crie um banco no Turso:
+
+```bash
+turso db create financial-dashboard
+turso db show financial-dashboard --url
+turso db tokens create financial-dashboard
+```
+
+### 4. Inicie o servidor de desenvolvimento
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra [http://localhost:3000](http://localhost:3000) no navegador.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+O projeto está configurado para deploy na Vercel. Adicione as variáveis `TURSO_DATABASE_URL` e `TURSO_AUTH_TOKEN` nas configurações de ambiente do projeto na Vercel.
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/bellegalvao/financial-dashboard)
