@@ -36,15 +36,15 @@ export function AllocationPieChart({ allocation, total }: Props) {
   }
 
   return (
-    <div className="space-y-2">
-      <ResponsiveContainer width="100%" height={220}>
+    <div className="space-y-4">
+      <ResponsiveContainer width="100%" height={240}>
         <PieChart>
           <Pie
             data={data}
             cx="50%"
-            cy="50%"
-            innerRadius={55}
-            outerRadius={90}
+            cy="45%"
+            innerRadius={58}
+            outerRadius={95}
             paddingAngle={3}
             dataKey="value"
           >
@@ -59,12 +59,12 @@ export function AllocationPieChart({ allocation, total }: Props) {
               [hidden ? HIDDEN_VALUE : `${formatBRL(val as number)} (${formatPercent(props.payload.pct)})`, name as string]
             }
           />
-          <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
+          <Legend iconSize={10} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
         </PieChart>
       </ResponsiveContainer>
 
-      <div className="text-center">
-        <p className="text-xs text-zinc-500">Total da carteira</p>
+      <div className="text-center pt-2 border-t border-zinc-800">
+        <p className="text-xs text-zinc-500 mb-1">Total da carteira</p>
         <p className="text-lg font-bold text-zinc-100">{privateBRL(total, hidden)}</p>
       </div>
     </div>
