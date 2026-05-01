@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Pencil, Check, X, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
+import { Pencil, Check, X, Trash2, ChevronDown, ChevronRight, ChevronsUpDown } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -71,6 +71,7 @@ export function PositionsTable({ positions, total, onRefresh }: Props) {
   const [draftSubtype,  setDraftSubtype]  = useState<RendaFixaSubtype>(null)
   const [draftQty,      setDraftQty]      = useState('')
   const [draftAvgPrice, setDraftAvgPrice] = useState('')
+  const [draftTotal,    setDraftTotal]    = useState('')
   const [deletingId,    setDeletingId]    = useState<number | null>(null)
 
   // Collapsed groups
@@ -136,9 +137,20 @@ export function PositionsTable({ positions, total, onRefresh }: Props) {
       asset_type: draftType,
       subtype: draftType === 'renda_fixa' ? draftSubtype : null,
     }
-    if (draftTicker.trim())         payload.ticker    = draftTicker
-    if (draftQty !== '')            payload.quantity  = parseFloat(draftQty)
-    if (draftAvgPrice !== '')       payload.avg_price = parseFloat(draftAvgPrice)
+    if (draftTicker.trim()) payload.ticker = draftTicker
+
+    const qty   = draftQty !== ''      ? parseFloat(draftQty)      : null
+    const price = draftAvgPrice !== '' ? parseFloat(draftAvgPrice) : null
+    const total = draftTotal !== ''    ? parseFloat(draftTotal)     : null
+
+    if (total !== null && !isNaN(total)) {
+      const baseQty = qty && qty > 0 ? qty : 1
+      payload.quantity  = baseQty
+      payload.avg_price = total / baseQty
+    } else {
+      if (qty !== null)   payload.quantity  = qty
+      if (price !== null) payload.avg_price = price
+    }
 
     const res = await patchPosition(id, payload)
     if (res.ok) {
@@ -180,8 +192,26 @@ export function PositionsTable({ positions, total, onRefresh }: Props) {
     { acoes: [], fii: [], renda_fixa: [], fundo_investimento: [], cripto: [], dolar: [] }
   )
 
+  const activeTypes = ASSET_ORDER.filter((type) => grouped[type].length > 0)
+  const allCollapsed = activeTypes.every((type) => collapsed.has(type))
+
+  function toggleAll() {
+    setCollapsed(allCollapsed ? new Set() : new Set(activeTypes))
+  }
+
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <button
+          onClick={toggleAll}
+          title={allCollapsed ? 'Expandir todos' : 'Recolher todos'}
+          className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+        >
+          <ChevronsUpDown className="h-3.5 w-3.5" />
+          {allCollapsed ? 'Expandir todos' : 'Recolher todos'}
+        </button>
+      </div>
+
       {ASSET_ORDER.filter((type) => grouped[type].length > 0).map((type) => {
         const group = grouped[type]
         const groupIds = group.map((p) => p.id)
@@ -344,18 +374,29 @@ export function PositionsTable({ positions, total, onRefresh }: Props) {
                         )}
                       </TableCell>
                       <TableCell className="text-right text-sm font-mono font-semibold">
-                        <div className="flex flex-col items-end gap-0.5">
-                          {privateBRL(pos.current_value, hidden)}
-                          {pos.current_price && pos.avg_price > 0 && (() => {
-                            const pnl = (pos.current_price - pos.avg_price) / pos.avg_price * 100
-                            const positive = pnl >= 0
-                            return (
-                              <span className={`text-[10px] font-mono font-normal ${positive ? 'text-emerald-400' : 'text-red-400'}`}>
-                                {positive ? '+' : ''}{pnl.toFixed(2)}%
-                              </span>
-                            )
-                          })()}
-                        </div>
+                        {isEditing ? (
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={draftTotal}
+                            onChange={(e) => setDraftTotal(e.target.value)}
+                            className="w-28 bg-zinc-800 border border-zinc-600 rounded px-1.5 py-0.5 text-xs font-mono text-zinc-100 outline-none text-right"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-end gap-0.5">
+                            {privateBRL(pos.current_value, hidden)}
+                            {pos.current_price && pos.avg_price > 0 && (() => {
+                              const pnl = (pos.current_price - pos.avg_price) / pos.avg_price * 100
+                              const positive = pnl >= 0
+                              return (
+                                <span className={`text-[10px] font-mono font-normal ${positive ? 'text-emerald-400' : 'text-red-400'}`}>
+                                  {positive ? '+' : ''}{pnl.toFixed(2)}%
+                                </span>
+                              )
+                            })()}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="text-right text-sm">
                         <div className="flex items-center justify-end gap-1">
@@ -389,6 +430,7 @@ export function PositionsTable({ positions, total, onRefresh }: Props) {
                                 setDraftSubtype(pos.subtype)
                                 setDraftQty(String(pos.quantity))
                                 setDraftAvgPrice(String(pos.avg_price))
+                                setDraftTotal(String(pos.current_value))
                               }}
                               className="opacity-0 group-hover/row:opacity-40 hover:!opacity-80 transition-opacity"
                             >

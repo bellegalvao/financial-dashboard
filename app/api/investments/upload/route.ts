@@ -25,8 +25,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Nenhuma posição encontrada no arquivo' }, { status: 422 })
     }
 
-    // Upsert: new tickers get asset_type/subtype from file; existing keep their manual values
+    // Snapshot das posições atuais antes de qualquer alteração
+    const beforeResult = await db.execute({ sql: 'SELECT ticker, asset_type FROM investment_positions', args: [] })
+    const beforeSet = new Set((beforeResult.rows as unknown as { ticker: string }[]).map((r) => r.ticker))
+
     const importedTickers = positions.map((p) => p.ticker)
+    const importedSet = new Set(importedTickers)
     const placeholders = importedTickers.map(() => '?').join(',')
 
     await db.batch([
@@ -78,6 +82,28 @@ export async function POST(req: NextRequest) {
       ], 'write')
     }
 
+    // Classificar ativos por status
+    const removedTickers = [...beforeSet].filter((t) => !importedSet.has(t))
+    const removedResult = await db.execute({
+      sql: `SELECT ticker, asset_type FROM investment_positions WHERE ticker IN (${removedTickers.map(() => '?').join(',') || "''"})`,
+      args: removedTickers,
+    })
+
+    const tickers = [
+      ...positions.map((p) => ({
+        ticker: p.ticker,
+        asset_type: p.asset_type as AssetType,
+        status: beforeSet.has(p.ticker) ? 'updated' as const : 'added' as const,
+      })),
+      ...(removedTickers.length
+        ? (removedResult.rows as unknown as { ticker: string; asset_type: string }[]).map((r) => ({
+            ticker: r.ticker,
+            asset_type: r.asset_type as AssetType,
+            status: 'removed' as const,
+          }))
+        : []),
+    ]
+
     return NextResponse.json({
       imported: positions.length,
       positions: positions.length,
@@ -85,6 +111,7 @@ export async function POST(req: NextRequest) {
       filename: file.name,
       format: 'posicao_detalhada',
       month: patrimonio?.month ?? null,
+      tickers,
     })
   }
 
@@ -94,6 +121,10 @@ export async function POST(req: NextRequest) {
   if (!parsed.length) {
     return NextResponse.json({ error: 'Nenhuma transação encontrada no arquivo' }, { status: 422 })
   }
+
+  // Snapshot antes
+  const beforeTxResult = await db.execute({ sql: 'SELECT ticker, asset_type FROM investment_positions WHERE quantity > 0', args: [] })
+  const beforeTxSet = new Set((beforeTxResult.rows as unknown as { ticker: string }[]).map((r) => r.ticker))
 
   await db.batch(
     parsed.map((tx) => ({
@@ -133,11 +164,30 @@ export async function POST(req: NextRequest) {
   const affectedMonths = [...new Set(parsed.map((t) => parseMonthKey(t.date)))]
   await updatePatrimonioSnapshots(affectedMonths)
 
+  const afterTxSet = new Set(positions.map((p) => p.ticker))
+  const parsedTickerMap = new Map(parsed.map((t) => [t.ticker, t.asset_type]))
+
+  const tickers = [
+    ...positions.map((p) => ({
+      ticker: p.ticker,
+      asset_type: p.asset_type as AssetType,
+      status: beforeTxSet.has(p.ticker) ? 'updated' as const : 'added' as const,
+    })),
+    ...[...beforeTxSet]
+      .filter((t) => !afterTxSet.has(t) && parsedTickerMap.has(t))
+      .map((t) => ({
+        ticker: t,
+        asset_type: (parsedTickerMap.get(t) ?? 'acoes') as AssetType,
+        status: 'removed' as const,
+      })),
+  ]
+
   return NextResponse.json({
     imported: parsed.length,
     positions: positions.length,
     filename: file.name,
     format: 'transacoes',
+    tickers,
   })
 }
 

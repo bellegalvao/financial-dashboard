@@ -161,20 +161,20 @@ export function parsePosicaoDetalhada(buffer: Buffer): PosicaoDetalhadaResult {
     const positionValue = parseBRL(col1)
 
     if (section === 'fii') {
-      // col[5]=preço médio, col[7]=quantidade
-      const avgPrice = parseBRL(row[5])
-      const qty      = parseFloat(String(row[7] ?? '')) || 0
+      // col[7]=quantidade; usa valor de mercado (positionValue) como base do total
+      const qty = parseFloat(String(row[7] ?? '')) || 0
       if (!col0 || qty <= 0) continue
-      positions.push({ ticker: col0.toUpperCase(), asset_type: 'fii', quantity: qty, avg_price: avgPrice, subtype: null })
+      // avg_price = valor de mercado por unidade para que qty × avg_price = positionValue
+      positions.push({ ticker: col0.toUpperCase(), asset_type: 'fii', quantity: qty, avg_price: positionValue / qty, subtype: null })
     }
 
     else if (section === 'acoes') {
-      // col[4]=preço médio, col[6]=quantidade
-      const avgPrice = parseBRL(row[4])
-      const qty      = parseFloat(String(row[6] ?? '')) || 0
+      // col[6]=quantidade; usa valor de mercado (positionValue) como base do total
+      const qty = parseFloat(String(row[6] ?? '')) || 0
       if (!col0 || qty <= 0) continue
       const asset_type = inferAssetType(col0)
-      positions.push({ ticker: col0.toUpperCase(), asset_type, quantity: qty, avg_price: avgPrice, subtype: null })
+      // avg_price = valor de mercado por unidade para que qty × avg_price = positionValue
+      positions.push({ ticker: col0.toUpperCase(), asset_type, quantity: qty, avg_price: positionValue / qty, subtype: null })
     }
 
     else if (section === 'renda_fixa') {

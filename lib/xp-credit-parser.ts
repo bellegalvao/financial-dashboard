@@ -1,5 +1,12 @@
 import type { TransactionInput } from './types'
 
+const SKIP_DESCRIPTIONS = ['btc', 'inter']
+
+function shouldSkip(description: string): boolean {
+  const lower = description.toLowerCase()
+  return SKIP_DESCRIPTIONS.some((kw) => lower.includes(kw))
+}
+
 interface ParsedRow {
   date: string
   description: string
@@ -49,8 +56,9 @@ export function parseXpCreditCSV(text: string): ParsedRow[] {
     if (!date) continue
 
     const value = parseBRL(rawValue)
-    // Skip payments (negative values) and zero-value rows
+    // Skip payments (negative values), zero-value rows, and ignored merchants
     if (isNaN(value) || value <= 0) continue
+    if (shouldSkip(rawDesc)) continue
 
     const { current, total } = parseInstallment(rawParc)
     const isInstallment = current !== null && total !== null
