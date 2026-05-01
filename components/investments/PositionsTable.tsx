@@ -247,7 +247,7 @@ export function PositionsTable({ positions, total, onRefresh }: Props) {
                 </button>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-xs font-mono opacity-70">{group.length}</span>
+                <span className="hidden md:inline text-xs font-mono opacity-70">{group.length}</span>
                 <span className="text-sm font-mono font-semibold">{privateBRL(groupTotal, hidden)}</span>
                 <span className="text-xs font-mono opacity-60">
                   {total > 0 ? formatPercent(groupTotal / total * 100) : '—'}
