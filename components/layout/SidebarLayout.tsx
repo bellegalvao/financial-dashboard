@@ -3,9 +3,14 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, CreditCard, TrendingUp, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react'
+import { LayoutDashboard, CreditCard, TrendingUp, ChevronLeft, ChevronRight, Eye, EyeOff, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { usePrivacy } from '@/lib/privacy-context'
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
 
 const NAV = [
   { href: '/dashboard',   label: 'Dashboard',    icon: LayoutDashboard },
@@ -17,13 +22,34 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const { hidden, toggle: togglePrivacy } = usePrivacy()
 
   useEffect(() => {
     const saved = localStorage.getItem('sidebar-collapsed')
     if (saved !== null) setCollapsed(saved === 'true')
     setMounted(true)
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {})
+    }
+
+    // Capture install prompt
+    const handler = (e: Event) => {
+      e.preventDefault()
+      setInstallPrompt(e as BeforeInstallPromptEvent)
+    }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
   }, [])
+
+  async function handleInstall() {
+    if (!installPrompt) return
+    await installPrompt.prompt()
+    const { outcome } = await installPrompt.userChoice
+    if (outcome === 'accepted') setInstallPrompt(null)
+  }
 
   function toggle() {
     setCollapsed((prev) => {
@@ -87,6 +113,15 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
         )}>
           {!collapsed && <p className="text-zinc-500 text-xs truncate">Isabelle Galvão</p>}
           <div className="flex items-center gap-1 shrink-0">
+            {installPrompt && (
+              <button
+                onClick={handleInstall}
+                title="Instalar app"
+                className="p-1 rounded text-emerald-500 hover:text-emerald-300 hover:bg-zinc-800 transition-colors"
+              >
+                <Download size={14} />
+              </button>
+            )}
             <button
               onClick={togglePrivacy}
               title={hidden ? 'Mostrar valores' : 'Ocultar valores'}
@@ -133,6 +168,15 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
             </Link>
           )
         })}
+        {installPrompt && (
+          <button
+            onClick={handleInstall}
+            className="flex flex-col items-center justify-center gap-1 py-3 px-3 text-xs font-medium text-emerald-400 transition-colors"
+          >
+            <Download className="h-5 w-5" />
+            <span>Instalar</span>
+          </button>
+        )}
       </nav>
 
     </div>
