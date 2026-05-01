@@ -10,8 +10,15 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Finance Dashboard',
   description: 'Controle financeiro pessoal',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Finanças',
+  },
   icons: {
-    icon: '/logo.png',
+    icon: '/icon-192.png',
+    apple: '/apple-icon-180.png',
   },
 }
 
