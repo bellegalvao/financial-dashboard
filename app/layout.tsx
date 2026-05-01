@@ -17,7 +17,6 @@ export const metadata: Metadata = {
     title: 'Finanças',
   },
   icons: {
-    icon: '/icon-192.png',
     apple: '/apple-icon-180.png',
   },
 }
