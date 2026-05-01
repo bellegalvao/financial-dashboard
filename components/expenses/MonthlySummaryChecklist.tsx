@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { formatBRL, privateBRL } from '@/lib/utils'
@@ -185,9 +185,11 @@ function ChecklistRow({
   const valueRef = useRef<HTMLInputElement>(null)
   const nameRef  = useRef<HTMLInputElement>(null)
 
-  if (isEditingName) {
-    setTimeout(() => nameRef.current?.select(), 0)
-  }
+  useEffect(() => {
+    if (isEditingName) {
+      setTimeout(() => { nameRef.current?.focus(); nameRef.current?.select() }, 0)
+    }
+  }, [isEditingName])
 
   function handleToggle(checked: boolean) {
     setOptimistic(checked)

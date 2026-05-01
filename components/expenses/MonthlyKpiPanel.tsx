@@ -1,3 +1,5 @@
+'use client'
+
 import { privateBRL } from '@/lib/utils'
 import { usePrivacy } from '@/lib/privacy-context'
 import type { MonthlySummary } from '@/lib/types'

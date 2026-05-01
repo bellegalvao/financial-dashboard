@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Pencil, Trash2, Plus } from 'lucide-react'
+import { Pencil, Trash2, Plus, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -34,9 +34,10 @@ interface Props {
   transactions: Transaction[]
   month: string
   onRefresh: () => void
+  onImport?: () => void
 }
 
-export function TransactionTable({ transactions, month, onRefresh }: Props) {
+export function TransactionTable({ transactions, month, onRefresh, onImport }: Props) {
   const [formOpen,  setFormOpen]  = useState(false)
   const [editing,   setEditing]   = useState<Transaction | null>(null)
   const [typeFilter, setTypeFilter] = useState<string>('all')
@@ -76,12 +77,14 @@ export function TransactionTable({ transactions, month, onRefresh }: Props) {
           </SelectContent>
         </Select>
 
-        <div className="hidden sm:block">
-          <Button
-            size="sm"
-            onClick={() => { setEditing(null); setFormOpen(true) }}
-            className="gap-1"
-          >
+        <div className="hidden sm:flex items-center gap-2">
+          {onImport && (
+            <Button variant="outline" size="sm" onClick={onImport} className="gap-1">
+              <Upload className="h-4 w-4" />
+              Importar extrato
+            </Button>
+          )}
+          <Button size="sm" onClick={() => { setEditing(null); setFormOpen(true) }} className="gap-1">
             <Plus className="h-4 w-4" />
             Adicionar
           </Button>

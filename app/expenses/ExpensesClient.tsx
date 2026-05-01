@@ -9,6 +9,7 @@ import { MonthlyKpiPanel, DiinheiroEmContaCard, EntradasCard, SaidasCard, Balanc
 import { CategoryBreakdownChart } from '@/components/expenses/CategoryBreakdownChart'
 import { TransactionForm } from '@/components/expenses/TransactionForm'
 import { CategoriesManager } from '@/components/expenses/CategoriesManager'
+import { ImportStatementDialog } from '@/components/expenses/ImportStatementDialog'
 import { PrivacyToggle } from '@/components/layout/PrivacyToggle'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import type { Transaction, MonthlySummary, ChecklistSection } from '@/lib/types'
@@ -22,6 +23,7 @@ export function ExpensesClient({ month }: Props) {
   const [summary,      setSummary]      = useState<MonthlySummary | null>(null)
   const [loading,      setLoading]      = useState(true)
   const [formOpen,     setFormOpen]     = useState(false)
+  const [importOpen,   setImportOpen]   = useState(false)
   const initializedRef = useRef(false)
 
   const fetchData = useCallback(async () => {
@@ -98,12 +100,17 @@ export function ExpensesClient({ month }: Props) {
         <Plus className="h-6 w-6" />
       </button>
 
-      {/* TransactionForm para o FAB mobile */}
       <TransactionForm
         open={formOpen}
         onClose={() => setFormOpen(false)}
         onSaved={() => { setFormOpen(false); fetchData() }}
         month={month}
+      />
+
+      <ImportStatementDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={fetchData}
       />
 
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
@@ -156,6 +163,7 @@ export function ExpensesClient({ month }: Props) {
                   transactions={transactions}
                   month={month}
                   onRefresh={fetchData}
+                  onImport={() => setImportOpen(true)}
                 />
               </div>
             </div>
@@ -208,6 +216,7 @@ export function ExpensesClient({ month }: Props) {
                   transactions={transactions}
                   month={month}
                   onRefresh={fetchData}
+                  onImport={() => setImportOpen(true)}
                 />
               </TabsContent>
 
