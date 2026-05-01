@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { SidebarLayout } from '@/components/layout/SidebarLayout'
+import { ServiceWorkerRegistrar } from '@/components/layout/ServiceWorkerRegistrar'
 import { Toaster } from '@/components/ui/sonner'
 import { PrivacyProvider } from '@/lib/privacy-context'
 
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SidebarLayout>{children}</SidebarLayout>
         </PrivacyProvider>
         <Toaster richColors position="top-right" />
+        <ServiceWorkerRegistrar />
       </body>
     </html>
   )
