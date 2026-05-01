@@ -41,7 +41,7 @@ export function MonthlySummaryChecklist({
   items, onToggle, onValueChange, onNameChange, onAddItem, onDeleteItem,
 }: Props) {
   const sections: ChecklistSection[] = ['entradas', 'contas_fixas', 'investimento', 'parcelados']
-  const [activeSection, setActiveSection] = useState<ChecklistSection>('contas_fixas')
+  const [activeSection, setActiveSection] = useState<ChecklistSection>('entradas')
   const [editingNameId, setEditingNameId] = useState<number | null>(null)
 
   async function handleAdd(section: ChecklistSection) {
