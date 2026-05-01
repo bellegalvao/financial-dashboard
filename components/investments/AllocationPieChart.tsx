@@ -37,14 +37,14 @@ export function AllocationPieChart({ allocation, total }: Props) {
 
   return (
     <div className="space-y-4">
-      <ResponsiveContainer width="100%" height={240}>
+      <ResponsiveContainer width="100%" height={280}>
         <PieChart>
           <Pie
             data={data}
             cx="50%"
-            cy="45%"
+            cy="42%"
             innerRadius={58}
-            outerRadius={95}
+            outerRadius={90}
             paddingAngle={3}
             dataKey="value"
           >
