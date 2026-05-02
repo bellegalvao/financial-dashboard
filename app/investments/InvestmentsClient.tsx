@@ -143,7 +143,6 @@ export function InvestmentsClient() {
 
       {/* Posições */}
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Posições atuais</h2>
         <PositionsTable positions={positions} total={total} onRefresh={fetchAll} />
       </div>
     </div>

@@ -201,7 +201,8 @@ export function PositionsTable({ positions, total, onRefresh }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Posições atuais</h2>
         <button
           onClick={toggleAll}
           title={allCollapsed ? 'Expandir todos' : 'Recolher todos'}
@@ -245,9 +246,21 @@ export function PositionsTable({ positions, total, onRefresh }: Props) {
                     {ASSET_TYPE_LABELS[type]}
                   </span>
                 </button>
+                {type === 'cripto' && group[0]?.current_price && (
+                  <span className="hidden md:flex items-center gap-1 rounded-full border border-amber-700/60 bg-amber-950/30 px-2 py-0.5 text-[10px] font-mono text-amber-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    BTC {privateBRL(group[0].current_price!, hidden)}
+                  </span>
+                )}
+                {type === 'dolar' && group[0]?.current_price && (
+                  <span className="hidden md:flex items-center gap-1 rounded-full border border-green-700/60 bg-green-950/30 px-2 py-0.5 text-[10px] font-mono text-green-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
+                    USD {privateBRL(group[0].current_price!, hidden)}
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-3">
-                <span className="hidden md:inline text-xs font-mono opacity-70">{group.length}</span>
+                <span className="hidden md:inline text-xs font-mono opacity-70">{group.length} posições</span>
                 <span className="text-sm font-mono font-semibold">{privateBRL(groupTotal, hidden)}</span>
                 <span className="text-xs font-mono opacity-60">
                   {total > 0 ? formatPercent(groupTotal / total * 100) : '—'}

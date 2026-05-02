@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
-import { parseXpFile, parsePosicaoDetalhada, isPosicaoDetalhada } from '@/lib/xp-parser'
+import { parseXpFile, parsePosicaoDetalhada, isPosicaoDetalhada, isExtratoContaXP, parseExtratoContaXP } from '@/lib/xp-parser'
 import { computePositions, parseMonthKey } from '@/lib/utils'
 import type { InvestmentTransaction, AssetType } from '@/lib/types'
 
@@ -112,6 +112,39 @@ export async function POST(req: NextRequest) {
       format: 'posicao_detalhada',
       month: patrimonio?.month ?? null,
       tickers,
+    })
+  }
+
+  // ── Extrato da Conta XP (proventos/dividendos) ─────────────────────────────
+  if (isExtratoContaXP(buffer)) {
+    const dividends = parseExtratoContaXP(buffer, file.name)
+
+    if (!dividends.length) {
+      return NextResponse.json({ error: 'Nenhum provento encontrado no extrato' }, { status: 422 })
+    }
+
+    const srcFile = `extrato_conta::${file.name}`
+    await db.batch([
+      { sql: 'DELETE FROM investment_transactions WHERE source_file = ?', args: [srcFile] },
+      ...dividends.map((d) => ({
+        sql: `INSERT INTO investment_transactions (date, ticker, asset_type, operation, total_value, source_file)
+          VALUES (?, ?, ?, 'D', ?, ?)`,
+        args: [d.date, d.ticker, d.asset_type, d.total_value, srcFile],
+      })),
+    ], 'write')
+
+    const uniqueTickers = [...new Map(dividends.map((d) => [d.ticker, d])).values()]
+
+    return NextResponse.json({
+      imported: dividends.length,
+      dividends: dividends.length,
+      filename: file.name,
+      format: 'extrato_conta',
+      tickers: uniqueTickers.map((d) => ({
+        ticker: d.ticker,
+        asset_type: d.asset_type,
+        status: 'added' as const,
+      })),
     })
   }
 
