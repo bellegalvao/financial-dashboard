@@ -27,7 +27,7 @@ interface UploadResult {
   positions: number
   dividends?: number
   filename: string
-  format: 'posicao_detalhada' | 'transacoes'
+  format: 'posicao_detalhada' | 'transacoes' | 'extrato_conta'
   month?: string | null
   tickers: TickerResult[]
 }
@@ -145,6 +145,8 @@ export function XpUploader({ onUploaded, history }: Props) {
                 <p className="text-sm font-medium text-emerald-300">
                   {result.format === 'posicao_detalhada'
                     ? `${result.positions} posições atualizadas`
+                    : result.format === 'extrato_conta'
+                    ? `${result.dividends} proventos importados do extrato da conta`
                     : `${result.imported} transações importadas · ${result.positions} posições recalculadas`}
                 </p>
                 <p className="text-xs text-zinc-500">{result.filename}</p>

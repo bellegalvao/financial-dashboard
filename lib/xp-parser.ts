@@ -206,6 +206,78 @@ export function parsePosicaoDetalhada(buffer: Buffer): PosicaoDetalhadaResult {
   return { positions, patrimonio, dividends }
 }
 
+// ─── Extrato da Conta XP (movimentação financeira) ───────────────────────────
+
+/** Detects whether a buffer is a XP "Extrato da conta" file */
+export function isExtratoContaXP(buffer: Buffer): boolean {
+  const wb = XLSX.read(buffer, { type: 'buffer', sheetRows: 5 })
+  const sheet = wb.Sheets[wb.SheetNames[0]]
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as string[][]
+  return rows.slice(0, 5).some((r) =>
+    r.some((c) => String(c).toLowerCase().includes('extrato da conta'))
+  )
+}
+
+/**
+ * Parses an XP "Extrato da conta de investimento" xlsx into dividend transactions.
+ * Extracts: DIVIDENDOS DE CLIENTES, RENDIMENTOS DE CLIENTES,
+ *           RENDIMENTO FUNDO FECHADO BALCÃO, JUROS S/ CAPITAL DE CLIENTES
+ */
+export function parseExtratoContaXP(buffer: Buffer, filename: string): InvestmentTransactionInput[] {
+  const wb = XLSX.read(buffer, { type: 'buffer', cellDates: true })
+  const sheet = wb.Sheets[wb.SheetNames[0]]
+  const rows: unknown[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null })
+
+  const results: InvestmentTransactionInput[] = []
+
+  for (const row of rows) {
+    // cols: [0]=Movimentação date, [1]=Liquidação date, [2]=Lançamento desc, [3]=null, [4]=Valor, [5]=Saldo
+    const dateVal = row[0]
+    const desc    = String(row[2] ?? '').trim()
+    const value   = typeof row[4] === 'number' ? row[4] : null
+
+    if (!dateVal || !desc || value === null || value <= 0) continue
+
+    // Dates come as ISO strings from cellDates: true + sheet_to_json
+    let date: string
+    if (typeof dateVal === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateVal)) {
+      date = dateVal.slice(0, 10)
+    } else if (dateVal instanceof Date) {
+      date = dateVal.toISOString().slice(0, 10)
+    } else {
+      const parsed = parseBrDate(String(dateVal))
+      if (!parsed) continue
+      date = parsed
+    }
+
+    const descUpper = desc.toUpperCase()
+
+    const clientesMatch = descUpper.match(/^(?:DIVIDENDOS|RENDIMENTOS) DE CLIENTES (\S+)\s+S\//)
+    const jcpMatch      = descUpper.match(/^JUROS S\/\s*CAPITAL DE CLIENTES (\S+)\s+S\//)
+    const fundoMatch    = descUpper.match(/^RENDIMENTO FUNDO FECHADO BALC[AÃ]O\s+(.+)/)
+
+    let ticker: string
+    let asset_type: AssetType
+
+    if (clientesMatch) {
+      ticker     = clientesMatch[1]
+      asset_type = inferAssetType(ticker)
+    } else if (jcpMatch) {
+      ticker     = jcpMatch[1]
+      asset_type = inferAssetType(ticker)
+    } else if (fundoMatch) {
+      ticker     = fundoMatch[1].trim()
+      asset_type = 'fundo_investimento'
+    } else {
+      continue
+    }
+
+    results.push({ date, ticker, asset_type, operation: 'D', total_value: value, source_file: filename })
+  }
+
+  return results
+}
+
 /**
  * Parses an XP extrato file (xlsx or csv) into InvestmentTransactionInput[].
  *
