@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { parseXpCreditCSV, xpRowToTransactionInput, type XpCreditRow } from '@/lib/xp-credit-parser'
+import { parseNubankCSV, nubankRowToTransactionInput } from '@/lib/nubank-parser'
 import type { Category } from '@/lib/types'
 
 interface Props {
@@ -15,10 +16,11 @@ interface Props {
   onImported: () => void
 }
 
-type Bank = 'xp'
+type Bank = 'xp' | 'nubank'
 
 const BANK_LABELS: Record<Bank, string> = {
-  xp: 'XP Investimentos',
+  xp:     'XP Investimentos',
+  nubank: 'Nubank',
 }
 
 interface RowState {
@@ -58,7 +60,7 @@ export function ImportStatementDialog({ open, onClose, onImported }: Props) {
     const file = e.target.files?.[0]
     if (!file) return
     const text = await file.text()
-    const parsed = bank === 'xp' ? parseXpCreditCSV(text) : []
+    const parsed = bank === 'xp' ? parseXpCreditCSV(text) : bank === 'nubank' ? parseNubankCSV(text) : []
     if (parsed.length === 0) { toast.error('Nenhuma transação encontrada no arquivo'); return }
     setRows(parsed.map((row) => ({ row, category: '', skip: false })))
   }
@@ -83,7 +85,11 @@ export function ImportStatementDialog({ open, onClose, onImported }: Props) {
       const res = await fetch('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(xpRowToTransactionInput(row, category)),
+        body: JSON.stringify(
+          bank === 'nubank'
+            ? nubankRowToTransactionInput(row, category)
+            : xpRowToTransactionInput(row, category)
+        ),
       })
       if (res.ok) success++; else failed++
     }
@@ -144,7 +150,9 @@ export function ImportStatementDialog({ open, onClose, onImported }: Props) {
           <div className="flex flex-col items-center justify-center gap-2 text-zinc-500 py-10">
             <Upload className="h-8 w-8 opacity-30" />
             <p className="text-sm">Selecione o arquivo CSV exportado do banco</p>
-            <p className="text-xs opacity-60">XP: Fatura › Exportar CSV</p>
+            <p className="text-xs opacity-60">
+              {bank === 'nubank' ? 'Nubank: Meus gastos › Exportar CSV' : 'XP: Fatura › Exportar CSV'}
+            </p>
           </div>
         )}
 
