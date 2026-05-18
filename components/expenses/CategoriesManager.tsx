@@ -65,6 +65,8 @@ export function CategoriesManager({ month }: Props) {
   const [newBudget,  setNewBudget]  = useState('')
   const [saving,     setSaving]     = useState(false)
 
+  const { hidden } = usePrivacy()
+
   const fetchCategories = useCallback(async () => {
     setLoading(true)
     const res = await fetch(`/api/categories?month=${month}`)
@@ -145,8 +147,6 @@ export function CategoriesManager({ month }: Props) {
   if (loading) {
     return <div className="flex items-center justify-center h-32 text-zinc-500">Carregando...</div>
   }
-
-  const { hidden } = usePrivacy()
   const filtered = typeFilter === 'all'
     ? categories
     : categories.filter((c) => c.type === typeFilter)
