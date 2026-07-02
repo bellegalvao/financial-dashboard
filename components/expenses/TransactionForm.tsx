@@ -43,8 +43,11 @@ interface Props {
 }
 
 export function TransactionForm({ open, onClose, onSaved, month, editing }: Props) {
+  // zod's z.coerce.number() makes the resolver's pre-transform input type diverge from
+  // FormValues (post-transform), which @hookform/resolvers can't express without `any`.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<FormValues, any, FormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(schema) as any,
     defaultValues: {
       date:           `${month}-01`,

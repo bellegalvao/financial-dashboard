@@ -95,9 +95,11 @@ export function ImportStatementDialog({ open, onClose, onImported }: Props) {
     }
 
     setImporting(false)
-    failed === 0
-      ? toast.success(`${success} transações importadas`)
-      : toast.warning(`${success} importadas, ${failed} falharam`)
+    if (failed === 0) {
+      toast.success(`${success} transações importadas`)
+    } else {
+      toast.warning(`${success} importadas, ${failed} falharam`)
+    }
 
     handleClose()
     onImported()
@@ -193,7 +195,7 @@ export function ImportStatementDialog({ open, onClose, onImported }: Props) {
                   className={`grid ${COLS} gap-x-2 items-center px-3 py-1.5 text-xs transition-opacity ${r.skip ? 'opacity-30' : ''}`}
                 >
                   <span className="font-mono text-zinc-400 whitespace-nowrap">
-                    {r.row.date.slice(5).replace('-', '/')}
+                    {r.row.date.slice(8)}/{r.row.date.slice(5, 7)}
                   </span>
 
                   <span className="truncate text-zinc-200 min-w-0" title={r.row.description}>

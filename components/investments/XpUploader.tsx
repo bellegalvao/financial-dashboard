@@ -3,7 +3,6 @@
 import { useRef, useState } from 'react'
 import { Upload, FileSpreadsheet, CheckCircle, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
 import type { AssetType } from '@/lib/types'
 
 interface UploadHistory {

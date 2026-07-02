@@ -1,6 +1,7 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext } from 'react'
+import { useLocalStorageBoolean } from './use-local-storage-boolean'
 
 interface PrivacyContextValue {
   hidden: boolean
@@ -10,18 +11,10 @@ interface PrivacyContextValue {
 const PrivacyContext = createContext<PrivacyContextValue>({ hidden: false, toggle: () => {} })
 
 export function PrivacyProvider({ children }: { children: React.ReactNode }) {
-  const [hidden, setHidden] = useState(false)
-
-  useEffect(() => {
-    const saved = localStorage.getItem('privacy-hidden')
-    if (saved === 'true') setHidden(true)
-  }, [])
+  const [hidden, setHidden] = useLocalStorageBoolean('privacy-hidden', false)
 
   function toggle() {
-    setHidden((prev) => {
-      localStorage.setItem('privacy-hidden', String(!prev))
-      return !prev
-    })
+    setHidden((prev) => !prev)
   }
 
   return (

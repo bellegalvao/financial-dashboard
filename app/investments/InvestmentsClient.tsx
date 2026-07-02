@@ -49,6 +49,8 @@ export function InvestmentsClient() {
     setLoading(false)
   }, [])
 
+  // Fetch-on-mount: setState only happens after the awaited fetch resolves, not synchronously.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchAll() }, [fetchAll])
 
   if (loading) {

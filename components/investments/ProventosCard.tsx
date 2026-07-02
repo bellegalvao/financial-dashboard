@@ -56,6 +56,8 @@ export function ProventosCard() {
     setLoading(false)
   }, [])
 
+  // Fetch-on-mount: setState only happens after the awaited fetch resolves, not synchronously.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchDividends('all') }, [fetchDividends])
 
   function handleYearChange(year: string) {
@@ -153,12 +155,6 @@ export function ProventosCard() {
               <BarChart
                 data={chartData}
                 margin={{ top: 4, right: 4, bottom: 0, left: 0 }}
-                onClick={(e: any) => {
-                  if (!e?.activePayload?.[0]) return
-                  const payload = e.activePayload[0].payload
-                  const found = byMonth.find((m) => m.month === payload.key) ?? null
-                  setSelectedMonth((prev) => prev?.month === payload.key ? null : found)
-                }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
                 <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#a1a1aa' }} axisLine={false} tickLine={false} />
@@ -169,7 +165,17 @@ export function ProventosCard() {
                   formatter={(val: unknown) => [hidden ? HIDDEN_VALUE : formatBRL(val as number), 'Proventos']}
                   cursor={{ fill: 'rgba(255,255,255,0.04)' }}
                 />
-                <Bar dataKey="total" radius={[3, 3, 0, 0]} style={{ cursor: 'pointer' }}>
+                <Bar
+                  dataKey="total"
+                  radius={[3, 3, 0, 0]}
+                  style={{ cursor: 'pointer' }}
+                  onClick={(_, index) => {
+                    const entry = chartData[index]
+                    if (!entry) return
+                    const found = byMonth.find((m) => m.month === entry.key) ?? null
+                    setSelectedMonth((prev) => prev?.month === entry.key ? null : found)
+                  }}
+                >
                   {chartData.map((entry, i) => (
                     <Cell
                       key={i}
