@@ -7,7 +7,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
-import { formatBRL, formatPercent, privateBRL } from '@/lib/utils'
+import { formatPercent, privateBRL } from '@/lib/utils'
 import { usePrivacy } from '@/lib/privacy-context'
 import { ASSET_TYPE_LABELS, ASSET_TYPES } from '@/lib/constants'
 import type { AssetType, RendaFixaSubtype } from '@/lib/types'
@@ -80,7 +80,7 @@ export function PositionsTable({ positions, total, onRefresh }: Props) {
   function toggleCollapse(type: AssetType) {
     setCollapsed((prev) => {
       const next = new Set(prev)
-      next.has(type) ? next.delete(type) : next.add(type)
+      if (next.has(type)) { next.delete(type) } else { next.add(type) }
       return next
     })
   }
@@ -103,7 +103,7 @@ export function PositionsTable({ positions, total, onRefresh }: Props) {
   function toggleSelect(id: number) {
     setSelected((prev) => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) { next.delete(id) } else { next.add(id) }
       return next
     })
   }

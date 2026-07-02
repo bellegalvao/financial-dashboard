@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
-import { formatBRL, privateBRL } from '@/lib/utils'
+import { privateBRL } from '@/lib/utils'
 import { usePrivacy } from '@/lib/privacy-context'
 import type { ChecklistItem, ChecklistSection } from '@/lib/types'
 

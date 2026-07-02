@@ -45,7 +45,6 @@ export async function GET(req: NextRequest) {
   }[]
 
   const entradas   = txs.filter((t) => t.type === 'entrada')
-  const saidas     = txs.filter((t) => t.type === 'saida' || t.type === 'conta_fixa' || t.type === 'parcelado' || t.type === 'investimento')
 
   // Classify fixed vs variable income
   const FIXED_INCOME = ['Salário', 'Caju']

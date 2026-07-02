@@ -95,9 +95,11 @@ export function ImportStatementDialog({ open, onClose, onImported }: Props) {
     }
 
     setImporting(false)
-    failed === 0
-      ? toast.success(`${success} transações importadas`)
-      : toast.warning(`${success} importadas, ${failed} falharam`)
+    if (failed === 0) {
+      toast.success(`${success} transações importadas`)
+    } else {
+      toast.warning(`${success} importadas, ${failed} falharam`)
+    }
 
     handleClose()
     onImported()

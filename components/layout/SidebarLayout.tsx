@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation'
 import { LayoutDashboard, CreditCard, TrendingUp, ChevronLeft, ChevronRight, Eye, EyeOff, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { usePrivacy } from '@/lib/privacy-context'
+import { useLocalStorageBoolean } from '@/lib/use-local-storage-boolean'
+import { useHasMounted } from '@/lib/use-has-mounted'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -20,16 +22,12 @@ const NAV = [
 
 export function SidebarLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
-  const [mounted, setMounted] = useState(false)
+  const [collapsed, setCollapsed] = useLocalStorageBoolean('sidebar-collapsed', false)
+  const mounted = useHasMounted()
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const { hidden, toggle: togglePrivacy } = usePrivacy()
 
   useEffect(() => {
-    const saved = localStorage.getItem('sidebar-collapsed')
-    if (saved !== null) setCollapsed(saved === 'true')
-    setMounted(true)
-
     // Register service worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {})
@@ -52,10 +50,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
   }
 
   function toggle() {
-    setCollapsed((prev) => {
-      localStorage.setItem('sidebar-collapsed', String(!prev))
-      return !prev
-    })
+    setCollapsed((prev) => !prev)
   }
 
   return (

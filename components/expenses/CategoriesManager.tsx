@@ -75,6 +75,8 @@ export function CategoriesManager({ month }: Props) {
     setLoading(false)
   }, [month])
 
+  // Fetch-on-mount: setState only happens after the awaited fetch resolves, not synchronously.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchCategories() }, [fetchCategories])
 
   function startEdit(cat: CategoryWithBudget) {
