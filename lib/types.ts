@@ -61,7 +61,7 @@ export interface CategoryWithBudget extends Category {
 
 // ─── Checklist ────────────────────────────────────────────────────────────────
 
-export type ChecklistSection = 'entradas' | 'contas_fixas' | 'investimento' | 'parcelados'
+export type ChecklistSection = 'entradas' | 'contas_fixas' | 'investimento' | 'parcelados' | 'assinaturas'
 
 export interface ChecklistItem {
   id: number

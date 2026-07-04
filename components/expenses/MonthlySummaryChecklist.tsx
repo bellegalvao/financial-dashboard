@@ -12,6 +12,7 @@ const SECTION_LABELS: Record<ChecklistSection, string> = {
   contas_fixas: 'Contas Fixas',
   investimento: 'Investimento',
   parcelados:   'Parcelados',
+  assinaturas:  'Assinaturas',
 }
 
 const SECTION_COLORS: Record<ChecklistSection, string> = {
@@ -19,6 +20,7 @@ const SECTION_COLORS: Record<ChecklistSection, string> = {
   contas_fixas: 'text-amber-400 border-amber-800 bg-amber-950/30',
   investimento: 'text-purple-400 border-purple-800 bg-purple-950/30',
   parcelados:   'text-blue-400 border-blue-800 bg-blue-950/30',
+  assinaturas:  'text-pink-400 border-pink-800 bg-pink-950/30',
 }
 
 const CHIP_ACTIVE: Record<ChecklistSection, string> = {
@@ -26,6 +28,7 @@ const CHIP_ACTIVE: Record<ChecklistSection, string> = {
   contas_fixas: 'bg-amber-500/20   border-amber-500   text-amber-400',
   investimento: 'bg-purple-500/20  border-purple-500  text-purple-400',
   parcelados:   'bg-blue-500/20    border-blue-500    text-blue-400',
+  assinaturas:  'bg-pink-500/20    border-pink-500    text-pink-400',
 }
 
 interface Props {
@@ -40,7 +43,7 @@ interface Props {
 export function MonthlySummaryChecklist({
   items, onToggle, onValueChange, onNameChange, onAddItem, onDeleteItem,
 }: Props) {
-  const sections: ChecklistSection[] = ['entradas', 'contas_fixas', 'investimento', 'parcelados']
+  const sections: ChecklistSection[] = ['entradas', 'contas_fixas', 'investimento', 'parcelados', 'assinaturas']
   const [activeSection, setActiveSection] = useState<ChecklistSection>('entradas')
   const [editingNameId, setEditingNameId] = useState<number | null>(null)
 
@@ -113,13 +116,13 @@ export function MonthlySummaryChecklist({
         </div>
       </div>
 
-      {/* Desktop: all sections side by side, wrapping */}
-      <div className="hidden sm:flex flex-wrap gap-4">
+      {/* Desktop: all sections in a 4-column grid, wrapping to new rows */}
+      <div className="hidden sm:grid grid-cols-4 gap-4">
         {sections.map((s) => {
           const secItems = items.filter((i) => i.section === s)
           const secColors = SECTION_COLORS[s]
           return (
-            <div key={s} className={`flex-1 min-w-52 p-3 rounded-lg border ${secColors}`}>
+            <div key={s} className={`p-3 rounded-lg border ${secColors}`}>
               <h3 className="text-xs font-bold uppercase tracking-wider mb-2 opacity-70">
                 {SECTION_LABELS[s]}
               </h3>

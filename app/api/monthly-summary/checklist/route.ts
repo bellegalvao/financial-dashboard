@@ -2,15 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
 import type { ChecklistItem, ChecklistSection, PaymentMethod, TransactionType } from '@/lib/types'
 
-const SECTION_TX: Record<ChecklistSection, { type: TransactionType; payment_method: PaymentMethod }> = {
+// 'assinaturas' fica de fora: é só uma lista de controle visual — as assinaturas
+// já são cobradas via cartão de crédito e contabilizadas naquele lançamento.
+const SECTION_TX: Partial<Record<ChecklistSection, { type: TransactionType; payment_method: PaymentMethod }>> = {
   entradas:     { type: 'entrada',      payment_method: 'debito_pix' },
   contas_fixas: { type: 'conta_fixa',   payment_method: 'debito_pix' },
   investimento: { type: 'investimento', payment_method: 'debito_pix' },
   parcelados:   { type: 'parcelado',    payment_method: 'credito'    },
 }
 
-async function createTransaction(item: ChecklistItem & { transaction_id: number | null }): Promise<number> {
-  const { type, payment_method } = SECTION_TX[item.section]
+async function createTransaction(
+  item: ChecklistItem & { transaction_id: number | null },
+  txConfig: { type: TransactionType; payment_method: PaymentMethod }
+): Promise<number> {
+  const { type, payment_method } = txConfig
   const result = await db.execute({
     sql: `INSERT INTO transactions (date, value, payment_method, category, type, description, month)
       VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -84,8 +89,15 @@ export async function PATCH(req: NextRequest) {
 
   if ('checked' in body) {
     const nowChecked = Boolean(body.checked)
-    if (nowChecked && !item.transaction_id) {
-      const txId = await createTransaction(item)
+    const txConfig = SECTION_TX[item.section]
+    if (!txConfig) {
+      // Seções sem lançamento vinculado (ex: assinaturas) — apenas alterna o checked
+      await db.execute({
+        sql: 'UPDATE monthly_checklist SET checked = ? WHERE id = ?',
+        args: [nowChecked ? 1 : 0, id],
+      })
+    } else if (nowChecked && !item.transaction_id) {
+      const txId = await createTransaction(item, txConfig)
       await db.execute({
         sql: 'UPDATE monthly_checklist SET checked = 1, transaction_id = ? WHERE id = ?',
         args: [txId, id],
