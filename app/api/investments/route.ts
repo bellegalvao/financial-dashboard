@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
 import { computePositions, parseMonthKey } from '@/lib/utils'
 import { fetchBtcPriceBRL, fetchUsdPriceBRL } from '@/lib/crypto'
+import { updatePatrimonioSnapshots } from '@/lib/patrimonio'
 import type { PatrimonioSnapshot, InvestmentTransaction, InvestmentTransactionInput } from '@/lib/types'
 
 export async function POST(req: NextRequest) {
@@ -95,41 +96,4 @@ export async function GET() {
   }
 
   return NextResponse.json({ snapshots, allocation: allocationMap, total })
-}
-
-async function updatePatrimonioSnapshots(months: string[]) {
-  for (const month of months.sort()) {
-    const txsResult = await db.execute({
-      sql: "SELECT * FROM investment_transactions WHERE date <= ? ORDER BY date ASC, id ASC",
-      args: [`${month}-31`],
-    })
-    const txsUntil = txsResult.rows as unknown as InvestmentTransaction[]
-
-    const positions = computePositions(txsUntil)
-
-    let total = 0, acoes = 0, fii = 0, renda_fixa = 0, cripto = 0, dolar = 0
-    for (const pos of positions) {
-      const val = pos.quantity * pos.avg_price
-      total += val
-      if (pos.asset_type === 'acoes')           acoes      += val
-      else if (pos.asset_type === 'fii')        fii        += val
-      else if (pos.asset_type === 'renda_fixa') renda_fixa += val
-      else if (pos.asset_type === 'cripto')     cripto     += val
-      else if (pos.asset_type === 'dolar')      dolar      += val
-    }
-
-    await db.execute({
-      sql: `INSERT INTO patrimonio_snapshots (month, total_value, acoes_value, fii_value, renda_fixa_value, cripto_value, dolar_value)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(month) DO UPDATE SET
-          total_value      = excluded.total_value,
-          acoes_value      = excluded.acoes_value,
-          fii_value        = excluded.fii_value,
-          renda_fixa_value = excluded.renda_fixa_value,
-          cripto_value     = excluded.cripto_value,
-          dolar_value      = excluded.dolar_value,
-          captured_at      = datetime('now')`,
-      args: [month, total, acoes, fii, renda_fixa, cripto, dolar],
-    })
-  }
 }
